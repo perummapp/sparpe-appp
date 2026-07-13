@@ -26,6 +26,7 @@ export default function SparringPage() {
   const [cargando, setCargando] = useState(true)
   const [userId, setUserId] = useState('')
   const [userNombre, setUserNombre] = useState('')
+  const [userFotoUrl, setUserFotoUrl] = useState('')
   const [fighters, setFighters] = useState<Fighter[]>([])
 
   const [filtroDisciplina, setFiltroDisciplina] = useState('')
@@ -48,12 +49,14 @@ export default function SparringPage() {
       if (!userData.user) { router.push('/login'); return }
       setUserId(userData.user.id)
 
-      const { data: miPerfil } = await supabase.from('perfiles').select('nombre').eq('id', userData.user.id).single()
+      const { data: miPerfil } = await supabase.from('perfiles').select('nombre, foto_url').eq('id', userData.user.id).single()
       setUserNombre(miPerfil?.nombre ?? '')
+      setUserFotoUrl(miPerfil?.foto_url ?? '')
 
       const { data } = await supabase
         .from('perfiles')
         .select('id, nombre, disciplina, peso_kg, nivel_experiencia, escuela, distrito')
+        .eq('tipo_usuario', 'sparring')
         .eq('disponible_sparring', true)
         .neq('id', userData.user.id)
 
@@ -72,14 +75,8 @@ export default function SparringPage() {
   })
 
   const handleProponer = async (fighter: Fighter) => {
-    setConfirmacion('')
-
-    if (!fechaPropuesta) {
-      setConfirmacion('Elige una fecha propuesta antes de enviar la solicitud.')
-      return
-    }
-
     setEnviando(true)
+    setConfirmacion('')
 
     const { error } = await supabase.from('solicitudes_sparring').insert({
       solicitante_id: userId,
@@ -95,7 +92,7 @@ export default function SparringPage() {
     setEnviando(false)
 
     if (error) {
-      setConfirmacion('No pudimos enviar la solicitud. Intenta de nuevo en unos segundos.')
+      setConfirmacion('Error: ' + error.message)
     } else {
       setConfirmacion(`¡Solicitud enviada a ${fighter.nombre}!`)
       setAbiertoId(null)
@@ -127,6 +124,15 @@ export default function SparringPage() {
         <p className="text-sm text-[#9a9a9a] mb-4">
           Solo se muestran peleadores marcados como &quot;disponibles para sparring&quot; en su perfil.
         </p>
+
+        {!userFotoUrl && (
+          <div className="bg-[#161616] border border-[#a32d2d]/40 rounded-xl p-3 mb-4">
+            <p className="text-sm text-[#e29b9b]">
+              Necesitas una selfie verificada en tu perfil antes de proponer sparring.{' '}
+              <Link href="/perfil" className="underline">Completar en mi perfil →</Link>
+            </p>
+          </div>
+        )}
 
         <p className="text-xs text-[#6b6b6b] mb-1">Disciplina</p>
         <div className="flex gap-2 overflow-x-auto pb-1 mb-3 scrollbar-hide">
@@ -190,7 +196,7 @@ export default function SparringPage() {
                 {f.escuela || 'Sin escuela'} · {f.distrito || 'Sin distrito'}
               </p>
 
-              {abiertoId !== f.id && (
+              {abiertoId !== f.id && userFotoUrl && (
                 <button
                   onClick={() => setAbiertoId(f.id)}
                   className="mt-3 bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm rounded-lg px-3 py-1.5 transition"

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import SelectSheet from '@/components/SelectSheet'
+import CapturaSelfie from '@/components/CapturaSelfie'
 import { DISTRITOS } from '@/lib/distritos'
 import { NIVELES_EXPERIENCIA } from '@/lib/nivelExperiencia'
 import { DISCIPLINAS } from '@/lib/disciplinas'
@@ -25,6 +26,8 @@ export default function PerfilPage() {
   const [escuela, setEscuela] = useState('')
   const [distrito, setDistrito] = useState('')
   const [disponibleSparring, setDisponibleSparring] = useState(false)
+  const [fotoUrl, setFotoUrl] = useState('')
+  const [mostrarCaptura, setMostrarCaptura] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -54,12 +57,26 @@ export default function PerfilPage() {
         setEscuela(perfil.escuela ?? '')
         setDistrito(perfil.distrito ?? '')
         setDisponibleSparring(perfil.disponible_sparring ?? false)
+        setFotoUrl(perfil.foto_url ?? '')
       }
       setCargando(false)
     }
     cargarDatos()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router])
+
+  const handleCambiarDisponible = (checked: boolean) => {
+    if (checked && !fotoUrl) {
+      setMostrarCaptura(true)
+      return
+    }
+    setDisponibleSparring(checked)
+  }
+
+  const handleSubidaSelfie = (url: string) => {
+    setFotoUrl(url)
+    setMostrarCaptura(false)
+  }
 
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,9 +93,6 @@ export default function PerfilPage() {
 
     setGuardando(true)
 
-    // No se incluye categoria_cuenta aquí a propósito: esta pantalla ya redirige
-    // a las cuentas empresa antes de llegar aquí, así que guardar el perfil
-    // personal nunca debería tocar ni pisar ese valor.
     const { error: guardarError } = await supabase.from('perfiles').upsert({
       id: userId,
       nombre,
@@ -106,6 +120,23 @@ export default function PerfilPage() {
     <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center p-6">
       <div className="w-full max-w-sm bg-[#161616] border border-[#262626] rounded-2xl p-8">
         <h1 className="text-2xl font-bold text-white mb-6">Mi perfil</h1>
+
+        <label className={labelClass}>Foto verificada</label>
+        {fotoUrl && !mostrarCaptura && (
+          <div className="flex items-center gap-3 mb-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={fotoUrl} alt="Tu selfie" className="w-14 h-14 rounded-full object-cover border border-[#333]" />
+            <button type="button" onClick={() => setMostrarCaptura(true)} className="text-xs text-[#e29b9b] hover:underline">
+              Actualizar selfie
+            </button>
+          </div>
+        )}
+        {(!fotoUrl || mostrarCaptura) && (
+          <div className="mb-4">
+            <CapturaSelfie userId={userId} onSubida={handleSubidaSelfie} />
+          </div>
+        )}
+
         <form onSubmit={handleGuardar}>
           <label className={labelClass}>Nombre</label>
           <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className={inputClass} />
@@ -160,15 +191,19 @@ export default function PerfilPage() {
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-[#e6e6e6] mb-6 mt-1">
+          <label className="flex items-center gap-2 text-sm text-[#e6e6e6] mb-1 mt-1">
             <input
               type="checkbox"
               checked={disponibleSparring}
-              onChange={(e) => setDisponibleSparring(e.target.checked)}
+              onChange={(e) => handleCambiarDisponible(e.target.checked)}
               className="w-4 h-4 accent-[#a32d2d]"
             />
             Estoy disponible para sparring ahora
           </label>
+          {!fotoUrl && (
+            <p className="text-xs text-[#6b6b6b] mb-6">Necesitas una selfie verificada para activar esto.</p>
+          )}
+          {fotoUrl && <div className="mb-6" />}
 
           {error && <p className="text-sm text-[#e29b9b] mb-4">{error}</p>}
 
