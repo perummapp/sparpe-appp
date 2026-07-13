@@ -57,28 +57,27 @@ export default function InicioPage() {
   }
 
   useEffect(() => {
-    let uid = ''
     let intervalo: ReturnType<typeof setInterval> | null = null
 
     const iniciar = async () => {
       const { data } = await supabase.auth.getUser()
-      if (!data.user) {
-        router.push('/login')
-        return
-      }
-      uid = data.user.id
-      setEmail(data.user.email ?? '')
-      await revisarNotificaciones(uid)
-      setCargando(false)
 
-      intervalo = setInterval(() => revisarNotificaciones(uid), NOTIF_POLL_MS)
+      if (data.user) {
+        const uid = data.user.id
+        setEmail(data.user.email ?? '')
+        await revisarNotificaciones(uid)
+        intervalo = setInterval(() => revisarNotificaciones(uid), NOTIF_POLL_MS)
+      }
+      // Sin usuario: no redirige. /inicio se puede explorar como invitado.
+
+      setCargando(false)
     }
     iniciar()
 
     return () => {
       if (intervalo) clearInterval(intervalo)
     }
-  }, [router])
+  }, [])
 
   const avanzarCarrusel = () => {
     const el = scrollRef.current
@@ -137,10 +136,19 @@ export default function InicioPage() {
         <div className="w-9 h-9 rounded-full bg-[#2a2a2a] flex items-center justify-center">
           <UserCircle size={20} className="text-[#e6e6e6]" />
         </div>
-        <p className="text-xs text-[#9a9a9a]">{email}</p>
-        <button onClick={handleLogout} title="Cerrar sesión">
-          <LogOut size={20} className="text-[#9a9a9a]" />
-        </button>
+        {email ? (
+          <>
+            <p className="text-xs text-[#9a9a9a]">{email}</p>
+            <button onClick={handleLogout} title="Cerrar sesión">
+              <LogOut size={20} className="text-[#9a9a9a]" />
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-[#9a9a9a]">Explorando como invitado</p>
+            <Link href="/login" className="text-xs text-[#e29b9b] hover:underline">Ingresar</Link>
+          </>
+        )}
       </div>
 
       <div className="max-w-md mx-auto px-5 mt-6 grid grid-cols-4 gap-y-5 gap-x-2">
