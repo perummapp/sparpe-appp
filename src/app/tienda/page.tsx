@@ -1,10 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
-import { CATEGORIAS_PRODUCTO } from '@/lib/categoriasProducto'
 
 type Producto = {
   id: string
@@ -28,26 +26,24 @@ type Oferta = {
 
 export default function TiendaPage() {
   const [cargando, setCargando] = useState(true)
-  const [categoriaCuenta, setCategoriaCuenta] = useState('persona')
   const [productos, setProductos] = useState<Producto[]>([])
   const [ofertas, setOfertas] = useState<Oferta[]>([])
   const [tengoMarca, setTengoMarca] = useState(false)
+  const [userId, setUserId] = useState('')
 
   const [filtroCategoria, setFiltroCategoria] = useState('')
   const [filtroMarca, setFiltroMarca] = useState('')
 
-  const router = useRouter()
-
   useEffect(() => {
     const cargar = async () => {
       const { data: userData } = await supabase.auth.getUser()
-      if (!userData.user) { router.push('/login'); return }
+      const uid = userData.user?.id ?? ''
+      setUserId(uid)
 
-      const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', userData.user.id).single()
-      setCategoriaCuenta(perfil?.categoria_cuenta ?? 'persona')
-
-      const { data: miMarca } = await supabase.from('marcas').select('id').eq('id', userData.user.id).single()
-      setTengoMarca(!!miMarca)
+      if (uid) {
+        const { data: miMarca } = await supabase.from('marcas').select('id').eq('id', uid).single()
+        setTengoMarca(!!miMarca)
+      }
 
       const { data: marcasVerificadas } = await supabase.from('marcas').select('id').eq('verificado', true)
       const idsVerificados = (marcasVerificadas ?? []).map((m) => m.id)
@@ -74,10 +70,10 @@ export default function TiendaPage() {
       setCargando(false)
     }
     cargar()
-  }, [router])
+  }, [])
 
   const productosFiltrados = productos.filter((p) => {
-    const okCategoria = filtroCategoria === '' || p.categoria === filtroCategoria
+    const okCategoria = filtroCategoria === '' || (p.categoria ?? '').toLowerCase().includes(filtroCategoria.toLowerCase())
     const okMarca = filtroMarca === '' || (p.marcas?.nombre ?? '').toLowerCase().includes(filtroMarca.toLowerCase())
     return okCategoria && okMarca
   })
@@ -87,10 +83,6 @@ export default function TiendaPage() {
   }
 
   const inputClass = "w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d]"
-  const chipClass = (activo: boolean) =>
-    `shrink-0 text-xs px-3 py-1.5 rounded-full border transition ${
-      activo ? 'bg-[#a32d2d] border-[#a32d2d] text-white' : 'border-[#333] text-[#9a9a9a] hover:border-[#555]'
-    }`
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] p-6">
@@ -103,12 +95,19 @@ export default function TiendaPage() {
           Artículos deportivos y equipamiento de marcas verificadas de la comunidad.
         </p>
 
-        {categoriaCuenta === 'empresa' && (
+        {userId ? (
           <Link
             href="/tienda/mi-marca"
             className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
           >
             {tengoMarca ? 'Administrar mi marca y productos' : '+ Publicar mi marca'}
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="block w-full text-center border border-[#333] text-[#9a9a9a] text-sm font-medium rounded-lg py-2.5 mb-6 transition hover:border-[#a32d2d]"
+          >
+            Inicia sesión para publicar tu marca
           </Link>
         )}
 
@@ -128,22 +127,10 @@ export default function TiendaPage() {
           </div>
         )}
 
-        <p className="text-xs text-[#6b6b6b] mb-1">Categoría</p>
-        <div className="flex gap-2 overflow-x-auto pb-1 mb-3 scrollbar-hide">
-          <button type="button" onClick={() => setFiltroCategoria('')} className={chipClass(filtroCategoria === '')}>
-            Todas
-          </button>
-          {CATEGORIAS_PRODUCTO.map((c) => {
-            const activo = filtroCategoria === c
-            return (
-              <button key={c} type="button" onClick={() => setFiltroCategoria(activo ? '' : c)} className={chipClass(activo)}>
-                {c}
-              </button>
-            )
-          })}
+        <div className="grid grid-cols-2 gap-2 mb-6">
+          <input placeholder="Categoría" value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)} className={inputClass} />
+          <input placeholder="Marca" value={filtroMarca} onChange={(e) => setFiltroMarca(e.target.value)} className={inputClass} />
         </div>
-
-        <input placeholder="Buscar por marca" value={filtroMarca} onChange={(e) => setFiltroMarca(e.target.value)} className={`${inputClass} mb-6`} />
 
         {productosFiltrados.length === 0 && (
           <p className="text-sm text-[#9a9a9a]">
@@ -165,7 +152,10 @@ export default function TiendaPage() {
                 <p className="text-xs text-[#9a9a9a] mt-0.5">{p.marcas?.nombre ?? 'Marca'}</p>
                 {p.precio !== null && <p className="text-sm text-[#e29b9b] font-medium mt-1">S/ {p.precio}</p>}
                 {p.link_compra && (
-                  <a href={p.link_compra} target="_blank" rel="noopener noreferrer" className="mt-auto pt-2 text-xs text-center border border-[#a32d2d] text-[#e29b9b] rounded-lg py-1.5 hover:bg-[#a32d2d] hover:text-white transition block">Comprar</a>
+                  <a href={p.link_compra} target="_blank" rel="noopener noreferrer"
+                    className="mt-auto pt-2 text-xs text-center border border-[#a32d2d] text-[#e29b9b] rounded-lg py-1.5 hover:bg-[#a32d2d] hover:text-white transition block">
+                    Comprar
+                  </a>
                 )}
               </div>
             </div>

@@ -1,12 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
-import SelectSheet from '@/components/SelectSheet'
-import { DISCIPLINAS } from '@/lib/disciplinas'
-import { DISTRITOS } from '@/lib/distritos'
 
 type Escuela = {
   id: string
@@ -29,7 +25,6 @@ type Oferta = {
 export default function EscuelasPage() {
   const [cargando, setCargando] = useState(true)
   const [userId, setUserId] = useState('')
-  const [categoriaCuenta, setCategoriaCuenta] = useState('persona')
   const [escuelas, setEscuelas] = useState<Escuela[]>([])
   const [miEscuela, setMiEscuela] = useState<Escuela | null>(null)
   const [ofertas, setOfertas] = useState<Oferta[]>([])
@@ -37,16 +32,11 @@ export default function EscuelasPage() {
   const [filtroDisciplina, setFiltroDisciplina] = useState('')
   const [filtroDistrito, setFiltroDistrito] = useState('')
 
-  const router = useRouter()
-
   useEffect(() => {
     const cargar = async () => {
       const { data: userData } = await supabase.auth.getUser()
-      if (!userData.user) { router.push('/login'); return }
-      setUserId(userData.user.id)
-
-      const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', userData.user.id).single()
-      setCategoriaCuenta(perfil?.categoria_cuenta ?? 'persona')
+      const uid = userData.user?.id ?? ''
+      setUserId(uid)
 
       const { data: publicas } = await supabase
         .from('escuelas')
@@ -54,10 +44,12 @@ export default function EscuelasPage() {
         .eq('verificado', true)
         .order('nombre', { ascending: true })
 
-      const { data: propia } = await supabase.from('escuelas').select('*').eq('id', userData.user.id).single()
-
       setEscuelas(publicas ?? [])
-      setMiEscuela(propia ?? null)
+
+      if (uid) {
+        const { data: propia } = await supabase.from('escuelas').select('*').eq('id', uid).single()
+        setMiEscuela(propia ?? null)
+      }
 
       const idsVerificados = (publicas ?? []).map((e) => e.id)
       if (idsVerificados.length > 0) {
@@ -74,12 +66,11 @@ export default function EscuelasPage() {
       setCargando(false)
     }
     cargar()
-  }, [router])
+  }, [])
 
   const escuelasFiltradas = escuelas.filter((e) => {
-    const listaDisciplinas = (e.disciplinas ?? '').split(',').map((d) => d.trim())
-    const okDisciplina = filtroDisciplina === '' || listaDisciplinas.includes(filtroDisciplina)
-    const okDistrito = filtroDistrito === '' || (e.distrito ?? '') === filtroDistrito
+    const okDisciplina = filtroDisciplina === '' || (e.disciplinas ?? '').toLowerCase().includes(filtroDisciplina.toLowerCase())
+    const okDistrito = filtroDistrito === '' || (e.distrito ?? '').toLowerCase().includes(filtroDistrito.toLowerCase())
     return okDisciplina && okDistrito
   })
 
@@ -87,8 +78,7 @@ export default function EscuelasPage() {
     return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
   }
 
-  const opcionesDisciplina = [{ value: '', label: 'Todas las disciplinas' }, ...DISCIPLINAS.map((d) => ({ value: d, label: d }))]
-  const opcionesDistrito = [{ value: '', label: 'Todos los distritos' }, ...DISTRITOS.map((d) => ({ value: d, label: d }))]
+  const inputClass = "w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d]"
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] p-6">
@@ -101,12 +91,19 @@ export default function EscuelasPage() {
           Directorio de escuelas y gimnasios de deportes de contacto en Perú.
         </p>
 
-        {categoriaCuenta === 'empresa' && (
+        {userId ? (
           <Link
             href="/escuelas/mi-escuela"
             className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
           >
             {miEscuela ? 'Editar mi escuela' : '+ Registrar mi escuela'}
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="block w-full text-center border border-[#333] text-[#9a9a9a] text-sm font-medium rounded-lg py-2.5 mb-6 transition hover:border-[#a32d2d]"
+          >
+            Inicia sesión para registrar tu escuela
           </Link>
         )}
 
@@ -127,18 +124,8 @@ export default function EscuelasPage() {
         )}
 
         <div className="grid grid-cols-2 gap-2 mb-6">
-          <SelectSheet
-            value={filtroDisciplina}
-            onChange={setFiltroDisciplina}
-            options={opcionesDisciplina}
-            placeholder="Disciplina"
-          />
-          <SelectSheet
-            value={filtroDistrito}
-            onChange={setFiltroDistrito}
-            options={opcionesDistrito}
-            placeholder="Distrito"
-          />
+          <input placeholder="Disciplina" value={filtroDisciplina} onChange={(e) => setFiltroDisciplina(e.target.value)} className={inputClass} />
+          <input placeholder="Distrito" value={filtroDistrito} onChange={(e) => setFiltroDistrito(e.target.value)} className={inputClass} />
         </div>
 
         {escuelasFiltradas.length === 0 && (
