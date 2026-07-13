@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Star, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
@@ -31,13 +30,11 @@ export default function EntrenadoresPage() {
   const [filtroEspecialidad, setFiltroEspecialidad] = useState('')
   const [filtroDistrito, setFiltroDistrito] = useState('')
 
-  const router = useRouter()
-
   useEffect(() => {
     const cargar = async () => {
       const { data: userData } = await supabase.auth.getUser()
-      if (!userData.user) { router.push('/login'); return }
-      setUserId(userData.user.id)
+      const uid = userData.user?.id ?? ''
+      setUserId(uid)
 
       const { data: lista } = await supabase
         .from('entrenadores_stats')
@@ -47,16 +44,19 @@ export default function EntrenadoresPage() {
 
       setEntrenadores(lista ?? [])
 
-      const { data: misSeguidos } = await supabase
-        .from('seguidores_entrenador')
-        .select('entrenador_id')
-        .eq('seguidor_id', userData.user.id)
+      if (uid) {
+        const { data: misSeguidos } = await supabase
+          .from('seguidores_entrenador')
+          .select('entrenador_id')
+          .eq('seguidor_id', uid)
 
-      setSiguiendo(new Set((misSeguidos ?? []).map((s) => s.entrenador_id)))
+        setSiguiendo(new Set((misSeguidos ?? []).map((s) => s.entrenador_id)))
+      }
+
       setCargando(false)
     }
     cargar()
-  }, [router])
+  }, [])
 
   const toggleSeguir = async (entrenadorId: string) => {
     if (siguiendo.has(entrenadorId)) {
@@ -128,14 +128,23 @@ export default function EntrenadoresPage() {
                       {e.especialidad || '—'} · {e.distrito || 'Sin distrito'}
                     </p>
                   </div>
-                  <button
-                    onClick={() => toggleSeguir(e.id)}
-                    className={`shrink-0 text-xs rounded-lg px-3 py-1.5 border transition ${
-                      yaSigo ? 'border-[#333] text-[#9a9a9a]' : 'bg-[#a32d2d] border-[#a32d2d] text-white hover:bg-[#8f2626]'
-                    }`}
-                  >
-                    {yaSigo ? 'Siguiendo' : 'Seguir'}
-                  </button>
+                  {userId ? (
+                    <button
+                      onClick={() => toggleSeguir(e.id)}
+                      className={`shrink-0 text-xs rounded-lg px-3 py-1.5 border transition ${
+                        yaSigo ? 'border-[#333] text-[#9a9a9a]' : 'bg-[#a32d2d] border-[#a32d2d] text-white hover:bg-[#8f2626]'
+                      }`}
+                    >
+                      {yaSigo ? 'Siguiendo' : 'Seguir'}
+                    </button>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="shrink-0 text-xs rounded-lg px-3 py-1.5 border border-[#333] text-[#9a9a9a] hover:border-[#a32d2d]"
+                    >
+                      Seguir
+                    </Link>
+                  )}
                 </div>
 
                 {e.descripcion && <p className="text-sm text-[#d8d8d8] mt-2">{e.descripcion}</p>}

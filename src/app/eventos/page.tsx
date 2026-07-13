@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 import SelectSheet from '@/components/SelectSheet'
@@ -38,15 +37,17 @@ export default function EventosPage() {
   const [filtroDisciplina, setFiltroDisciplina] = useState('')
   const [filtroCiudad, setFiltroCiudad] = useState('')
 
-  const router = useRouter()
-
   useEffect(() => {
     const cargar = async () => {
       const { data: userData } = await supabase.auth.getUser()
-      if (!userData.user) { router.push('/login'); return }
 
-      const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', userData.user.id).single()
-      setCategoriaCuenta(perfil?.categoria_cuenta ?? 'persona')
+      if (userData.user) {
+        const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', userData.user.id).single()
+        setCategoriaCuenta(perfil?.categoria_cuenta ?? 'persona')
+      }
+      // Sin usuario: no redirige, categoriaCuenta se queda en 'persona' (el botón
+      // de "Publicar mi evento" ya solo aparece si es 'empresa', así que un
+      // invitado nunca lo ve — no hace falta lógica extra para eso.
 
       const hoy = new Date().toISOString().slice(0, 10)
 
@@ -62,7 +63,7 @@ export default function EventosPage() {
       setCargando(false)
     }
     cargar()
-  }, [router])
+  }, [])
 
   const eventosFiltrados = eventos.filter((e) => {
     const okDisciplina = filtroDisciplina === '' || (e.disciplina ?? '') === filtroDisciplina
