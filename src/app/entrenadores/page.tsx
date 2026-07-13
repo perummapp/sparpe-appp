@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Star, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
-import SelectSheet from '@/components/SelectSheet'
-import { DISCIPLINAS } from '@/lib/disciplinas'
-import { DISTRITOS } from '@/lib/distritos'
 
 type EntrenadorStats = {
   id: string
@@ -42,6 +39,7 @@ export default function EntrenadoresPage() {
       const { data: lista } = await supabase
         .from('entrenadores_stats')
         .select('*')
+        .eq('verificado', true)
         .order('total_seguidores', { ascending: false })
 
       setEntrenadores(lista ?? [])
@@ -74,8 +72,8 @@ export default function EntrenadoresPage() {
   }
 
   const entrenadoresFiltrados = entrenadores.filter((e) => {
-    const okEspecialidad = filtroEspecialidad === '' || (e.especialidad ?? '') === filtroEspecialidad
-    const okDistrito = filtroDistrito === '' || (e.distrito ?? '') === filtroDistrito
+    const okEspecialidad = filtroEspecialidad === '' || (e.especialidad ?? '').toLowerCase().includes(filtroEspecialidad.toLowerCase())
+    const okDistrito = filtroDistrito === '' || (e.distrito ?? '').toLowerCase().includes(filtroDistrito.toLowerCase())
     return okEspecialidad && okDistrito
   })
 
@@ -83,8 +81,7 @@ export default function EntrenadoresPage() {
     return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
   }
 
-  const opcionesEspecialidad = [{ value: '', label: 'Todas las especialidades' }, ...DISCIPLINAS.map((d) => ({ value: d, label: d }))]
-  const opcionesDistrito = [{ value: '', label: 'Todos los distritos' }, ...DISTRITOS.map((d) => ({ value: d, label: d }))]
+  const inputClass = "w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d]"
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] p-6">
@@ -101,63 +98,59 @@ export default function EntrenadoresPage() {
           href="/entrenadores/mi-entrenador"
           className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
         >
-          + Publicar mi oferta de clases
+          + Ofrecer clases personalizadas
         </Link>
 
         <div className="grid grid-cols-2 gap-2 mb-6">
-          <SelectSheet
-            value={filtroEspecialidad}
-            onChange={setFiltroEspecialidad}
-            options={opcionesEspecialidad}
-            placeholder="Especialidad"
-          />
-          <SelectSheet
-            value={filtroDistrito}
-            onChange={setFiltroDistrito}
-            options={opcionesDistrito}
-            placeholder="Distrito"
-          />
+          <input placeholder="Especialidad" value={filtroEspecialidad} onChange={(e) => setFiltroEspecialidad(e.target.value)} className={inputClass} />
+          <input placeholder="Distrito" value={filtroDistrito} onChange={(e) => setFiltroDistrito(e.target.value)} className={inputClass} />
         </div>
 
         {entrenadoresFiltrados.length === 0 && (
-          <p className="text-sm text-[#9a9a9a]">Todavía no hay entrenadores registrados con esos filtros.</p>
+          <p className="text-sm text-[#9a9a9a]">
+            Todavía no hay entrenadores verificados con esos filtros.
+          </p>
         )}
 
         <div className="space-y-3">
-          {entrenadoresFiltrados.map((e) => (
-            <div key={e.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
-              <Link href={`/entrenadores/${e.id}`}>
-                <p className="text-white font-medium">{e.nombre}</p>
-                <p className="text-sm text-[#9a9a9a] mt-1">
-                  {e.especialidad || '—'} · {e.distrito || 'Sin distrito'}{e.tarifa ? ` · ${e.tarifa}` : ''}
-                </p>
-              </Link>
+          {entrenadoresFiltrados.map((e) => {
+            const yaSigo = siguiendo.has(e.id)
+            return (
+              <div key={e.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-white font-medium">{e.nombre}</p>
+                    <p className="text-sm text-[#9a9a9a] mt-1">
+                      {e.especialidad || '—'} · {e.distrito || 'Sin distrito'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => toggleSeguir(e.id)}
+                    className={`shrink-0 text-xs rounded-lg px-3 py-1.5 border transition ${
+                      yaSigo ? 'border-[#333] text-[#9a9a9a]' : 'bg-[#a32d2d] border-[#a32d2d] text-white hover:bg-[#8f2626]'
+                    }`}
+                  >
+                    {yaSigo ? 'Siguiendo' : 'Seguir'}
+                  </button>
+                </div>
 
-              <div className="flex items-center gap-4 mt-3">
-                <div className="flex items-center gap-1 text-sm text-[#e29b9b]">
-                  <Star size={14} fill="currentColor" />
-                  {e.total_resenas > 0 ? e.calificacion_promedio.toFixed(1) : 'Sin reseñas'}
-                  {e.total_resenas > 0 && <span className="text-[#6b6b6b]">({e.total_resenas})</span>}
+                {e.descripcion && <p className="text-sm text-[#d8d8d8] mt-2">{e.descripcion}</p>}
+
+                <div className="flex items-center gap-4 mt-2 text-xs text-[#9a9a9a]">
+                  {e.total_resenas > 0 && (
+                    <span className="flex items-center gap-1"><Star size={12} className="text-[#e29b9b]" /> {e.calificacion_promedio.toFixed(1)} ({e.total_resenas})</span>
+                  )}
+                  <span className="flex items-center gap-1"><Users size={12} /> {e.total_seguidores} seguidores</span>
                 </div>
-                <div className="flex items-center gap-1 text-sm text-[#9a9a9a]">
-                  <Users size={14} /> {e.total_seguidores}
-                </div>
+
+                {(e.tarifa || e.contacto) && (
+                  <p className="text-xs text-[#6b6b6b] mt-2">
+                    {e.tarifa}{e.tarifa && e.contacto ? ' · ' : ''}{e.contacto}
+                  </p>
+                )}
               </div>
-
-              {e.id !== userId && (
-                <button
-                  onClick={() => toggleSeguir(e.id)}
-                  className={`mt-3 text-sm rounded-lg px-3 py-1.5 transition ${
-                    siguiendo.has(e.id)
-                      ? 'border border-[#333] text-[#9a9a9a]'
-                      : 'bg-[#a32d2d] hover:bg-[#8f2626] text-white'
-                  }`}
-                >
-                  {siguiendo.has(e.id) ? 'Siguiendo' : 'Seguir'}
-                </button>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>
