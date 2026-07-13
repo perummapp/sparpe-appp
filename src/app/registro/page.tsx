@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -10,24 +11,36 @@ export default function RegistroPage() {
   const [password, setPassword] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [cargando, setCargando] = useState(false)
+  const router = useRouter()
 
   const handleRegistro = async (e: React.FormEvent) => {
     e.preventDefault()
     setCargando(true)
     setMensaje('')
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
       options: { data: { nombre } },
     })
 
-    setCargando(false)
-
     if (error) {
+      setCargando(false)
       setMensaje('Error: ' + error.message)
-    } else {
-      setMensaje('¡Cuenta creada correctamente!')
+      return
     }
+
+    if (!data.session || !data.user) {
+      setCargando(false)
+      setMensaje('¡Cuenta creada! Revisa tu correo para confirmar tu cuenta antes de iniciar sesión.')
+      return
+    }
+
+    await supabase.from('perfiles').upsert({
+      id: data.user.id,
+      nombre,
+    })
+
+    router.push('/inicio')
   }
 
   return (
@@ -37,7 +50,7 @@ export default function RegistroPage() {
         <p className="text-sm text-[#9a9a9a] mb-6">Únete al registro oficial de SparPe</p>
 
         <form onSubmit={handleRegistro}>
-          <label className="text-sm text-[#9a9a9a] mb-1 block">Nombre</label>
+          <label className="text-sm text-[#9a9a9a] mb-1 block">Nombre y apellido</label>
           <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required
             className="w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d] mb-4" />
 
