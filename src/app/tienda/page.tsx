@@ -30,6 +30,7 @@ export default function TiendaPage() {
   const [ofertas, setOfertas] = useState<Oferta[]>([])
   const [tengoMarca, setTengoMarca] = useState(false)
   const [userId, setUserId] = useState('')
+  const [categoriaCuenta, setCategoriaCuenta] = useState<string | null>(null)
 
   const [filtroCategoria, setFiltroCategoria] = useState('')
   const [filtroMarca, setFiltroMarca] = useState('')
@@ -41,6 +42,9 @@ export default function TiendaPage() {
       setUserId(uid)
 
       if (uid) {
+        const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', uid).single()
+        setCategoriaCuenta(perfil?.categoria_cuenta ?? null)
+
         const { data: miMarca } = await supabase.from('marcas').select('id').eq('id', uid).single()
         setTengoMarca(!!miMarca)
       }
@@ -95,19 +99,21 @@ export default function TiendaPage() {
           Artículos deportivos y equipamiento de marcas verificadas de la comunidad.
         </p>
 
-        {userId ? (
-          <Link
-            href="/tienda/mi-marca"
-            className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
-          >
-            {tengoMarca ? 'Administrar mi marca y productos' : '+ Publicar mi marca'}
-          </Link>
-        ) : (
+        {!userId && (
           <Link
             href="/login"
             className="block w-full text-center border border-[#333] text-[#9a9a9a] text-sm font-medium rounded-lg py-2.5 mb-6 transition hover:border-[#a32d2d]"
           >
             Inicia sesión para publicar tu marca
+          </Link>
+        )}
+
+        {userId && categoriaCuenta === 'empresa' && (
+          <Link
+            href="/tienda/mi-marca"
+            className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
+          >
+            {tengoMarca ? 'Administrar mi marca y productos' : '+ Publicar mi marca'}
           </Link>
         )}
 
@@ -161,6 +167,15 @@ export default function TiendaPage() {
             </div>
           ))}
         </div>
+
+        {userId && categoriaCuenta !== 'empresa' && (
+          <Link
+            href="/soy-empresa"
+            className="block text-center mt-8 text-xs text-[#9a9a9a] hover:text-[#e29b9b] hover:underline"
+          >
+            ¿Eres una empresa y quieres vender tus artículos? Publica tu marca aquí →
+          </Link>
+        )}
       </div>
     </div>
   )

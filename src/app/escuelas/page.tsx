@@ -25,6 +25,7 @@ type Oferta = {
 export default function EscuelasPage() {
   const [cargando, setCargando] = useState(true)
   const [userId, setUserId] = useState('')
+  const [categoriaCuenta, setCategoriaCuenta] = useState<string | null>(null)
   const [escuelas, setEscuelas] = useState<Escuela[]>([])
   const [miEscuela, setMiEscuela] = useState<Escuela | null>(null)
   const [ofertas, setOfertas] = useState<Oferta[]>([])
@@ -47,6 +48,9 @@ export default function EscuelasPage() {
       setEscuelas(publicas ?? [])
 
       if (uid) {
+        const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', uid).single()
+        setCategoriaCuenta(perfil?.categoria_cuenta ?? null)
+
         const { data: propia } = await supabase.from('escuelas').select('*').eq('id', uid).single()
         setMiEscuela(propia ?? null)
       }
@@ -91,19 +95,21 @@ export default function EscuelasPage() {
           Directorio de escuelas y gimnasios de deportes de contacto en Perú.
         </p>
 
-        {userId ? (
-          <Link
-            href="/escuelas/mi-escuela"
-            className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
-          >
-            {miEscuela ? 'Editar mi escuela' : '+ Registrar mi escuela'}
-          </Link>
-        ) : (
+        {!userId && (
           <Link
             href="/login"
             className="block w-full text-center border border-[#333] text-[#9a9a9a] text-sm font-medium rounded-lg py-2.5 mb-6 transition hover:border-[#a32d2d]"
           >
             Inicia sesión para registrar tu escuela
+          </Link>
+        )}
+
+        {userId && categoriaCuenta === 'empresa' && (
+          <Link
+            href="/escuelas/mi-escuela"
+            className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
+          >
+            {miEscuela ? 'Editar mi escuela' : '+ Registrar mi escuela'}
           </Link>
         )}
 
@@ -155,6 +161,15 @@ export default function EscuelasPage() {
             </div>
           ))}
         </div>
+
+        {userId && categoriaCuenta !== 'empresa' && (
+          <Link
+            href="/soy-empresa"
+            className="block text-center mt-8 text-xs text-[#9a9a9a] hover:text-[#e29b9b] hover:underline"
+          >
+            ¿Tienes una escuela o gimnasio? Publícala aquí →
+          </Link>
+        )}
       </div>
     </div>
   )
