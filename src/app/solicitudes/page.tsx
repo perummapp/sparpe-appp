@@ -20,6 +20,8 @@ type Solicitud = {
   realizado_en: string | null
   resena_solicitante_hecha: boolean
   resena_receptor_hecha: boolean
+  mensaje_no_leido_solicitante: boolean
+  mensaje_no_leido_receptor: boolean
 }
 
 export default function SolicitudesPage() {
@@ -115,6 +117,9 @@ export default function SolicitudesPage() {
   const estadoColor = (estado: string) =>
     estado === 'aceptada' ? 'text-green-400' : estado === 'rechazada' ? 'text-red-400' : 'text-amber-400'
 
+  const tieneMensajeNoLeido = (s: Solicitud, soyElSolicitante: boolean) =>
+    soyElSolicitante ? s.mensaje_no_leido_solicitante : s.mensaje_no_leido_receptor
+
   const renderAccionesSparring = (s: Solicitud) => {
     if (s.estado !== 'aceptada') return null
 
@@ -201,40 +206,54 @@ export default function SolicitudesPage() {
         <h2 className="text-sm text-[#9a9a9a] uppercase tracking-wide mb-2">Recibidas</h2>
         {recibidas.length === 0 && <p className="text-sm text-[#9a9a9a] mb-6">No tienes solicitudes recibidas.</p>}
         <div className="space-y-3 mb-8">
-          {recibidas.map((s) => (
-            <div key={s.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
-              <p className="text-white font-medium">{s.solicitante_nombre}</p>
-              <p className="text-sm text-[#9a9a9a] mt-1">{s.fecha_propuesta || 'Sin fecha'} · {s.gimnasio_propuesto || 'Lugar por coordinar'}</p>
-              {s.mensaje && <p className="text-sm text-[#9a9a9a] mt-1 italic">&quot;{s.mensaje}&quot;</p>}
-              <p className="text-sm mt-1">Estado: <span className={`font-medium ${estadoColor(s.estado)}`}>{s.estado}</span></p>
-              <Link href={`/solicitudes/${s.id}`} className="text-sm text-[#e29b9b] hover:underline mt-2 inline-block">
-                Abrir chat
-              </Link>
-              {s.estado === 'pendiente' && (
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => responder(s.id, 'aceptada')} className="bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm rounded-lg px-3 py-1.5 transition">Aceptar</button>
-                  <button onClick={() => responder(s.id, 'rechazada')} className="border border-[#a32d2d] text-[#e29b9b] text-sm rounded-lg px-3 py-1.5 hover:bg-[#a32d2d] hover:text-white transition">Rechazar</button>
+          {recibidas.map((s) => {
+            const tieneNotificacion = s.estado === 'pendiente' || tieneMensajeNoLeido(s, false)
+            return (
+              <div key={s.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-white font-medium">{s.solicitante_nombre}</p>
+                  {tieneNotificacion && <span className="shrink-0 mt-1 w-2 h-2 bg-[#a32d2d] rounded-full" />}
                 </div>
-              )}
-              {renderAccionesSparring(s)}
-            </div>
-          ))}
+                <p className="text-sm text-[#9a9a9a] mt-1">{s.fecha_propuesta || 'Sin fecha'} · {s.gimnasio_propuesto || 'Lugar por coordinar'}</p>
+                {s.mensaje && <p className="text-sm text-[#9a9a9a] mt-1 italic">&quot;{s.mensaje}&quot;</p>}
+                <p className="text-sm mt-1">Estado: <span className={`font-medium ${estadoColor(s.estado)}`}>{s.estado}</span></p>
+                <Link href={`/solicitudes/${s.id}`} className="text-sm text-[#e29b9b] hover:underline mt-2 inline-flex items-center gap-1.5">
+                  Abrir chat
+                  {tieneMensajeNoLeido(s, false) && <span className="w-1.5 h-1.5 bg-[#a32d2d] rounded-full" />}
+                </Link>
+                {s.estado === 'pendiente' && (
+                  <div className="flex gap-2 mt-2">
+                    <button onClick={() => responder(s.id, 'aceptada')} className="bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm rounded-lg px-3 py-1.5 transition">Aceptar</button>
+                    <button onClick={() => responder(s.id, 'rechazada')} className="border border-[#a32d2d] text-[#e29b9b] text-sm rounded-lg px-3 py-1.5 hover:bg-[#a32d2d] hover:text-white transition">Rechazar</button>
+                  </div>
+                )}
+                {renderAccionesSparring(s)}
+              </div>
+            )
+          })}
         </div>
 
         <h2 className="text-sm text-[#9a9a9a] uppercase tracking-wide mb-2">Enviadas</h2>
         {enviadas.length === 0 && <p className="text-sm text-[#9a9a9a]">No has enviado solicitudes.</p>}
         <div className="space-y-3">
-          {enviadas.map((s) => (
-            <div key={s.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
-              <p className="text-white font-medium">{s.receptor_nombre}</p>
-              <p className="text-sm text-[#9a9a9a] mt-1">{s.fecha_propuesta || 'Sin fecha'} · {s.gimnasio_propuesto || 'Lugar por coordinar'}</p>
-              <p className="text-sm mt-1">Estado: <span className={`font-medium ${estadoColor(s.estado)}`}>{s.estado}</span></p>
-              <Link href={`/solicitudes/${s.id}`} className="text-sm text-[#e29b9b] hover:underline mt-2 inline-block">
-                Abrir chat
-              </Link>
-              {renderAccionesSparring(s)}
-            </div>
-          ))}
+          {enviadas.map((s) => {
+            const tieneNotificacion = tieneMensajeNoLeido(s, true)
+            return (
+              <div key={s.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-white font-medium">{s.receptor_nombre}</p>
+                  {tieneNotificacion && <span className="shrink-0 mt-1 w-2 h-2 bg-[#a32d2d] rounded-full" />}
+                </div>
+                <p className="text-sm text-[#9a9a9a] mt-1">{s.fecha_propuesta || 'Sin fecha'} · {s.gimnasio_propuesto || 'Lugar por coordinar'}</p>
+                <p className="text-sm mt-1">Estado: <span className={`font-medium ${estadoColor(s.estado)}`}>{s.estado}</span></p>
+                <Link href={`/solicitudes/${s.id}`} className="text-sm text-[#e29b9b] hover:underline mt-2 inline-flex items-center gap-1.5">
+                  Abrir chat
+                  {tieneNotificacion && <span className="w-1.5 h-1.5 bg-[#a32d2d] rounded-full" />}
+                </Link>
+                {renderAccionesSparring(s)}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
