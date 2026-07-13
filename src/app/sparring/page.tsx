@@ -72,8 +72,14 @@ export default function SparringPage() {
   })
 
   const handleProponer = async (fighter: Fighter) => {
-    setEnviando(true)
     setConfirmacion('')
+
+    if (!fechaPropuesta) {
+      setConfirmacion('Elige una fecha propuesta antes de enviar la solicitud.')
+      return
+    }
+
+    setEnviando(true)
 
     const { error } = await supabase.from('solicitudes_sparring').insert({
       solicitante_id: userId,
@@ -89,7 +95,7 @@ export default function SparringPage() {
     setEnviando(false)
 
     if (error) {
-      setConfirmacion('Error: ' + error.message)
+      setConfirmacion('No pudimos enviar la solicitud. Intenta de nuevo en unos segundos.')
     } else {
       setConfirmacion(`¡Solicitud enviada a ${fighter.nombre}!`)
       setAbiertoId(null)
