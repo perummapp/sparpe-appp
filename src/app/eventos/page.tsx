@@ -31,6 +31,7 @@ function formatoFecha(fechaISO: string) {
 
 export default function EventosPage() {
   const [cargando, setCargando] = useState(true)
+  const [userId, setUserId] = useState('')
   const [categoriaCuenta, setCategoriaCuenta] = useState('persona')
   const [eventos, setEventos] = useState<Evento[]>([])
 
@@ -42,6 +43,7 @@ export default function EventosPage() {
       const { data: userData } = await supabase.auth.getUser()
 
       if (userData.user) {
+        setUserId(userData.user.id)
         const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', userData.user.id).single()
         setCategoriaCuenta(perfil?.categoria_cuenta ?? 'persona')
       }
@@ -150,6 +152,15 @@ export default function EventosPage() {
             </div>
           ))}
         </div>
+
+        {userId && categoriaCuenta !== 'empresa' && (
+          <Link
+            href="/soy-empresa"
+            className="block text-center mt-8 text-xs text-[#9a9a9a] hover:text-[#e29b9b] hover:underline"
+          >
+            ¿Eres una promotora y quieres promocionar tu evento? →
+          </Link>
+        )}
       </div>
     </div>
   )
