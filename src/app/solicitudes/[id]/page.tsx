@@ -123,8 +123,8 @@ export default function ChatSparringPage() {
   const otroNombre = solicitud!.solicitante_id === userId ? solicitud!.receptor_nombre : solicitud!.solicitante_nombre
 
   return (
-    <div className="min-h-screen bg-[#0d0d0d] flex flex-col">
-      <div className="max-w-md mx-auto w-full px-5 pt-6 pb-3 border-b border-[#262626]">
+    <div className="h-[100dvh] bg-[#0d0d0d] flex flex-col overflow-hidden">
+      <div className="max-w-md mx-auto w-full px-5 pt-6 pb-3 border-b border-[#262626] shrink-0">
         <Link href="/solicitudes" className="text-xs text-[#9a9a9a] hover:underline">← Solicitudes</Link>
         <h1 className="text-xl font-bold text-white mt-1">{otroNombre}</h1>
         <p className="text-xs text-[#9a9a9a] mt-0.5">
@@ -132,7 +132,7 @@ export default function ChatSparringPage() {
         </p>
       </div>
 
-      <div className="flex-1 max-w-md mx-auto w-full px-5 py-4 overflow-y-auto space-y-2">
+      <div className="flex-1 min-h-0 max-w-md mx-auto w-full px-5 py-4 overflow-y-auto space-y-2">
         {mensajes.length === 0 && (
           <p className="text-sm text-[#6b6b6b] text-center mt-6">
             Aún no hay mensajes. Escribe para coordinar el sparring.
@@ -142,7 +142,7 @@ export default function ChatSparringPage() {
           const esMio = m.remitente_id === userId
           return (
             <div key={m.id} className={`flex ${esMio ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${esMio ? 'bg-[#a32d2d] text-white' : 'bg-[#1e1e1e] text-[#e6e6e6] border border-[#262626]'}`}>
+              <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm break-words ${esMio ? 'bg-[#a32d2d] text-white' : 'bg-[#1e1e1e] text-[#e6e6e6] border border-[#262626]'}`}>
                 {m.contenido}
               </div>
             </div>
@@ -151,13 +151,13 @@ export default function ChatSparringPage() {
         <div ref={finRef} />
       </div>
 
-      <form onSubmit={handleEnviar} className="max-w-md mx-auto w-full px-5 py-4 border-t border-[#262626] flex gap-2">
+      <form onSubmit={handleEnviar} className="max-w-md mx-auto w-full px-5 py-4 border-t border-[#262626] flex gap-2 shrink-0">
         <input
           type="text"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           placeholder="Escribe un mensaje..."
-          className="flex-1 bg-[#1e1e1e] border border-[#333] rounded-full px-4 py-2 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d]"
+          className="flex-1 bg-[#1e1e1e] border border-[#333] rounded-full px-4 py-2 text-base text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d]"
         />
         <button
           type="submit"
