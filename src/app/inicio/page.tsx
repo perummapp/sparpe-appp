@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Star, Building2, ShoppingBag, Trophy, ClipboardList, UserCircle, LogOut, Inbox, Calendar } from 'lucide-react'
+import { Search, Star, Building2, ShoppingBag, Trophy, ClipboardList, UserCircle, LogOut, Inbox, Calendar, Award } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
 const banners = [
@@ -20,14 +20,16 @@ const accesos = [
   { href: '/escuelas', label: 'Escuelas cerca', icon: Building2 },
   { href: '/tienda', label: 'Tienda', icon: ShoppingBag },
   { href: '/eventos', label: 'Eventos', icon: Calendar },
-  { href: '/ranking', label: 'Ranking', icon: Trophy },
-  { href: '/resultados', label: 'Mis resultados', icon: ClipboardList },
+  { href: '/ranking', label: 'Ranking Comunidad', icon: Trophy },
+  { href: '/ranking-oficial', label: 'Ranking Oficial MMA', icon: Award },
+  { href: '/mis-sparring', label: 'Mis sparring', icon: ClipboardList },
   { href: '/perfil', label: 'Mi perfil', icon: UserCircle },
 ]
 
 const GAP_PX = 12
 const AUTOPLAY_MS = 3500
 const RESUME_AFTER_MS = 5000
+const NOTIF_POLL_MS = 15000
 
 export default function InicioPage() {
   const [cargando, setCargando] = useState(true)
@@ -39,32 +41,43 @@ export default function InicioPage() {
   const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const resumeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const revisarNotificaciones = async (uid: string) => {
+    const { count: countPendientes } = await supabase
+      .from('solicitudes_sparring')
+      .select('id', { count: 'exact', head: true })
+      .eq('receptor_id', uid)
+      .eq('estado', 'pendiente')
+
+    const { count: countNoLeidos } = await supabase
+      .from('solicitudes_sparring')
+      .select('id', { count: 'exact', head: true })
+      .or(`and(solicitante_id.eq.${uid},mensaje_no_leido_solicitante.eq.true),and(receptor_id.eq.${uid},mensaje_no_leido_receptor.eq.true)`)
+
+    setHayNotificacion((countPendientes ?? 0) + (countNoLeidos ?? 0) > 0)
+  }
+
   useEffect(() => {
-    const verificarSesion = async () => {
+    let uid = ''
+    let intervalo: ReturnType<typeof setInterval> | null = null
+
+    const iniciar = async () => {
       const { data } = await supabase.auth.getUser()
       if (!data.user) {
         router.push('/login')
         return
       }
+      uid = data.user.id
       setEmail(data.user.email ?? '')
-
-      const uid = data.user.id
-
-      const { count: countPendientes } = await supabase
-        .from('solicitudes_sparring')
-        .select('id', { count: 'exact', head: true })
-        .eq('receptor_id', uid)
-        .eq('estado', 'pendiente')
-
-      const { count: countNoLeidos } = await supabase
-        .from('solicitudes_sparring')
-        .select('id', { count: 'exact', head: true })
-        .or(`and(solicitante_id.eq.${uid},mensaje_no_leido_solicitante.eq.true),and(receptor_id.eq.${uid},mensaje_no_leido_receptor.eq.true)`)
-
-      setHayNotificacion((countPendientes ?? 0) + (countNoLeidos ?? 0) > 0)
+      await revisarNotificaciones(uid)
       setCargando(false)
+
+      intervalo = setInterval(() => revisarNotificaciones(uid), NOTIF_POLL_MS)
     }
-    verificarSesion()
+    iniciar()
+
+    return () => {
+      if (intervalo) clearInterval(intervalo)
+    }
   }, [router])
 
   const avanzarCarrusel = () => {
