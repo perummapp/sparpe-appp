@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
+import SelectSheet from '@/components/SelectSheet'
+import { DISCIPLINAS } from '@/lib/disciplinas'
+import { DISTRITOS } from '@/lib/distritos'
 
 export default function MiEntrenadorPage() {
   const [cargando, setCargando] = useState(true)
@@ -117,10 +120,24 @@ export default function MiEntrenadorPage() {
           <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Tu nombre o el de tu marca personal" className={inputClass} />
 
           <label className={labelClass}>Especialidad</label>
-          <input type="text" value={especialidad} onChange={(e) => setEspecialidad(e.target.value)} placeholder="Ej. Boxeo, Muay Thai, MMA" className={inputClass} />
+          <div className="mb-4">
+            <SelectSheet
+              value={especialidad}
+              onChange={setEspecialidad}
+              options={DISCIPLINAS.map((d) => ({ value: d, label: d }))}
+              placeholder="Selecciona tu especialidad"
+            />
+          </div>
 
           <label className={labelClass}>Distrito donde entrenas</label>
-          <input type="text" value={distrito} onChange={(e) => setDistrito(e.target.value)} placeholder="Ej. Miraflores" className={inputClass} />
+          <div className="mb-4">
+            <SelectSheet
+              value={distrito}
+              onChange={setDistrito}
+              options={DISTRITOS.map((d) => ({ value: d, label: d }))}
+              placeholder="Selecciona tu distrito"
+            />
+          </div>
 
           <label className={labelClass}>Tarifa (opcional)</label>
           <input type="text" value={tarifa} onChange={(e) => setTarifa(e.target.value)} placeholder="Ej. S/ 50 por clase" className={inputClass} />

@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Star, Users } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
+import SelectSheet from '@/components/SelectSheet'
+import { DISCIPLINAS } from '@/lib/disciplinas'
+import { DISTRITOS } from '@/lib/distritos'
 
 type EntrenadorStats = {
   id: string
@@ -81,8 +84,6 @@ export default function EntrenadoresPage() {
     return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
   }
 
-  const inputClass = "w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d]"
-
   return (
     <div className="min-h-screen bg-[#0d0d0d] p-6">
       <div className="max-w-md mx-auto">
@@ -95,8 +96,18 @@ export default function EntrenadoresPage() {
         </p>
 
         <div className="grid grid-cols-2 gap-2 mb-6">
-          <input placeholder="Especialidad" value={filtroEspecialidad} onChange={(e) => setFiltroEspecialidad(e.target.value)} className={inputClass} />
-          <input placeholder="Distrito" value={filtroDistrito} onChange={(e) => setFiltroDistrito(e.target.value)} className={inputClass} />
+          <SelectSheet
+            value={filtroEspecialidad}
+            onChange={setFiltroEspecialidad}
+            options={[{ value: '', label: 'Todas las especialidades' }, ...DISCIPLINAS.map((d) => ({ value: d, label: d }))]}
+            placeholder="Especialidad"
+          />
+          <SelectSheet
+            value={filtroDistrito}
+            onChange={setFiltroDistrito}
+            options={[{ value: '', label: 'Todos los distritos' }, ...DISTRITOS.map((d) => ({ value: d, label: d }))]}
+            placeholder="Distrito"
+          />
         </div>
 
         {entrenadoresFiltrados.length === 0 && (
