@@ -94,13 +94,6 @@ export default function EntrenadoresPage() {
           Entrenadores y peleadores que ofrecen clases particulares.
         </p>
 
-        <Link
-          href="/entrenadores/mi-entrenador"
-          className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
-        >
-          + Ofrecer clases personalizadas
-        </Link>
-
         <div className="grid grid-cols-2 gap-2 mb-6">
           <input placeholder="Especialidad" value={filtroEspecialidad} onChange={(e) => setFiltroEspecialidad(e.target.value)} className={inputClass} />
           <input placeholder="Distrito" value={filtroDistrito} onChange={(e) => setFiltroDistrito(e.target.value)} className={inputClass} />
@@ -152,6 +145,13 @@ export default function EntrenadoresPage() {
             )
           })}
         </div>
+
+        <Link
+          href="/entrenadores/mi-entrenador"
+          className="block text-center mt-8 text-xs text-[#9a9a9a] hover:text-[#e29b9b] hover:underline"
+        >
+          ¿Enseñas tú? Ofrece clases personalizadas →
+        </Link>
       </div>
     </div>
   )
