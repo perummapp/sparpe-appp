@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Search, Star, Building2, ShoppingBag, Trophy, ClipboardList, UserCircle, LogOut, Inbox, Calendar, Award } from 'lucide-react'
+import { Search, Star, Building2, ShoppingBag, Trophy, ClipboardList, UserCircle, LogOut, Inbox, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
 const banners = [
@@ -20,9 +20,8 @@ const accesos = [
   { href: '/escuelas', label: 'Escuelas cerca', icon: Building2 },
   { href: '/tienda', label: 'Tienda', icon: ShoppingBag },
   { href: '/eventos', label: 'Eventos', icon: Calendar },
-  { href: '/ranking', label: 'Ranking Comunidad', icon: Trophy },
-  { href: '/ranking-oficial', label: 'Ranking Oficial MMA', icon: Award },
-  { href: '/mis-sparring', label: 'Mis sparring', icon: ClipboardList },
+  { href: '/ranking', label: 'Ranking', icon: Trophy },
+  { href: '/resultados', label: 'Mis resultados', icon: ClipboardList },
   { href: '/perfil', label: 'Mi perfil', icon: UserCircle },
 ]
 
@@ -33,6 +32,7 @@ const RESUME_AFTER_MS = 5000
 export default function InicioPage() {
   const [cargando, setCargando] = useState(true)
   const [email, setEmail] = useState('')
+  const [hayNotificacion, setHayNotificacion] = useState(false)
   const router = useRouter()
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -44,10 +44,25 @@ export default function InicioPage() {
       const { data } = await supabase.auth.getUser()
       if (!data.user) {
         router.push('/login')
-      } else {
-        setEmail(data.user.email ?? '')
-        setCargando(false)
+        return
       }
+      setEmail(data.user.email ?? '')
+
+      const uid = data.user.id
+
+      const { count: countPendientes } = await supabase
+        .from('solicitudes_sparring')
+        .select('id', { count: 'exact', head: true })
+        .eq('receptor_id', uid)
+        .eq('estado', 'pendiente')
+
+      const { count: countNoLeidos } = await supabase
+        .from('solicitudes_sparring')
+        .select('id', { count: 'exact', head: true })
+        .or(`and(solicitante_id.eq.${uid},mensaje_no_leido_solicitante.eq.true),and(receptor_id.eq.${uid},mensaje_no_leido_receptor.eq.true)`)
+
+      setHayNotificacion((countPendientes ?? 0) + (countNoLeidos ?? 0) > 0)
+      setCargando(false)
     }
     verificarSesion()
   }, [router])
@@ -118,10 +133,14 @@ export default function InicioPage() {
       <div className="max-w-md mx-auto px-5 mt-6 grid grid-cols-4 gap-y-5 gap-x-2">
         {accesos.map((a) => {
           const Icon = a.icon
+          const mostrarPunto = a.href === '/solicitudes' && hayNotificacion
           return (
             <Link key={a.href} href={a.href} className="flex flex-col items-center gap-1.5 text-center">
-              <div className="w-12 h-12 rounded-full bg-[#f2f0ea] flex items-center justify-center">
+              <div className="relative w-12 h-12 rounded-full bg-[#f2f0ea] flex items-center justify-center">
                 <Icon size={22} className="text-[#1c1c1c]" />
+                {mostrarPunto && (
+                  <span className="absolute top-0 right-0 w-3 h-3 bg-[#a32d2d] rounded-full border-2 border-[#0d0d0d]" />
+                )}
               </div>
               <span className="text-[10.5px] text-[#d8d8d8] leading-tight">{a.label}</span>
             </Link>

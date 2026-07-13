@@ -74,13 +74,17 @@ export default function ChatSparringPage() {
 
       setSolicitud(sol)
       await cargarMensajes()
+      await supabase.rpc('marcar_conversacion_leida', { p_solicitud_id: solicitudId })
       setCargando(false)
     }
     iniciar()
   }, [router, solicitudId])
 
   useEffect(() => {
-    const intervalo = setInterval(cargarMensajes, 4000)
+    const intervalo = setInterval(async () => {
+      await cargarMensajes()
+      await supabase.rpc('marcar_conversacion_leida', { p_solicitud_id: solicitudId })
+    }, 4000)
     return () => clearInterval(intervalo)
   }, [solicitudId])
 
@@ -100,11 +104,13 @@ export default function ChatSparringPage() {
       contenido: texto.trim(),
     })
 
-    setEnviando(false)
     if (!error) {
+      await supabase.rpc('marcar_mensaje_enviado', { p_solicitud_id: solicitudId })
       setTexto('')
       await cargarMensajes()
     }
+
+    setEnviando(false)
   }
 
   if (cargando) {
