@@ -8,6 +8,8 @@ type Props = {
   onSubida: (url: string) => void
 }
 
+const MARCO = 240 // tamaño del círculo en px
+
 export default function CapturaSelfie({ userId, onSubida }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -27,6 +29,17 @@ export default function CapturaSelfie({ userId, onSubida }: Props) {
     return () => detenerCamara()
   }, [])
 
+  // Se ejecuta DESPUÉS de que React monta el <video> (cuando estado pasa a 'camara'),
+  // que es el único momento en que videoRef.current existe de verdad.
+  // Antes se intentaba asignar el stream antes de que el elemento existiera,
+  // por eso la cámara se veía negra en todas las plataformas.
+  useEffect(() => {
+    if (estado === 'camara' && streamRef.current && videoRef.current) {
+      videoRef.current.srcObject = streamRef.current
+      videoRef.current.play().catch(() => {})
+    }
+  }, [estado])
+
   const abrirCamara = async () => {
     setError('')
     try {
@@ -35,9 +48,6 @@ export default function CapturaSelfie({ userId, onSubida }: Props) {
         audio: false,
       })
       streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
       setEstado('camara')
     } catch {
       setError('No se pudo acceder a la cámara. Revisa que le hayas dado permiso a este sitio en tu navegador.')
@@ -54,8 +64,6 @@ export default function CapturaSelfie({ userId, onSubida }: Props) {
     canvas.height = video.videoHeight
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    // el video se ve espejado en pantalla (natural para el usuario), pero
-    // la foto guardada se des-espeja para que no quede al revés
     ctx.translate(canvas.width, 0)
     ctx.scale(-1, 1)
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
@@ -121,8 +129,11 @@ export default function CapturaSelfie({ userId, onSubida }: Props) {
 
       {estado === 'camara' && (
         <div>
-          <video ref={videoRef} autoPlay playsInline muted
-            className="w-full rounded-lg mb-3 scale-x-[-1] bg-black" style={{ maxHeight: 320, objectFit: 'cover' }} />
+          <div className="mx-auto mb-3 rounded-full overflow-hidden border-2 border-[#a32d2d] bg-black"
+            style={{ width: MARCO, height: MARCO }}>
+            <video ref={videoRef} autoPlay playsInline muted
+              className="w-full h-full object-cover scale-x-[-1]" />
+          </div>
           <button type="button" onClick={tomarFoto}
             className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 transition">
             Tomar foto
@@ -132,8 +143,11 @@ export default function CapturaSelfie({ userId, onSubida }: Props) {
 
       {estado === 'preview' && fotoPreviewUrl && (
         <div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={fotoPreviewUrl} alt="Selfie capturada" className="w-full rounded-lg mb-3" style={{ maxHeight: 320, objectFit: 'cover' }} />
+          <div className="mx-auto mb-3 rounded-full overflow-hidden border-2 border-[#a32d2d]"
+            style={{ width: MARCO, height: MARCO }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={fotoPreviewUrl} alt="Selfie capturada" className="w-full h-full object-cover" />
+          </div>
           <div className="flex gap-2">
             <button type="button" onClick={confirmar}
               className="flex-1 bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 transition">
