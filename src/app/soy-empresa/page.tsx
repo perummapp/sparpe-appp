@@ -137,14 +137,9 @@ export default function SoyEmpresaPage() {
 
         <div className="text-center">
           <p className="text-xs text-[#6b6b6b] mb-2">¿Prefieres escribirnos directo?</p>
-          <div className="flex justify-center gap-4">
-            <a href="https://wa.me/51999999999" target="_blank" rel="noopener noreferrer" className="text-sm text-[#e29b9b] hover:underline">
-              WhatsApp
-            </a>
-            <a href="mailto:hola@sparpe.pe" className="text-sm text-[#e29b9b] hover:underline">
-              Correo
-            </a>
-          </div>
+          <a href="mailto:perummapp@gmail.com" className="text-sm text-[#e29b9b] hover:underline">
+            perummapp@gmail.com
+          </a>
         </div>
       </div>
     </div>
