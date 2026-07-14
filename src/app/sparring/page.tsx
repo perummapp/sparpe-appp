@@ -61,7 +61,6 @@ export default function SparringPage() {
       const { data: fightersData } = await supabase
         .from('perfiles')
         .select('id, nombre, foto_url, disciplina, peso_kg, nivel_experiencia, escuela, distrito')
-        .eq('tipo_usuario', 'peleador')
         .eq('disponible_sparring', true)
         .neq('id', userData.user.id)
 
