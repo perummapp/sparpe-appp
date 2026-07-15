@@ -195,11 +195,10 @@ export default function SparringPage() {
 
         {confirmacion && <p className="text-sm text-accent-light mb-4">{confirmacion}</p>}
 
-  {fightersFiltrados.length === 0 && (
+        {fightersFiltrados.length === 0 && (
           <p className="text-sm text-muted">
             Nadie disponible con esos filtros por ahora. Prueba ajustando los filtros, o vuelve a revisar más tarde.
           </p>
-        )}
         )}
 
         <div className="space-y-3">
