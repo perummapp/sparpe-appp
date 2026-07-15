@@ -10,6 +10,12 @@
   --color-surface: #161616;
   --color-border: #262626;
   --color-muted: #9a9a9a;
+
+  --ease-primary: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 180ms;
+  --duration-normal: 220ms;
+  --duration-slow: 300ms;
 }
 
 @theme inline {
@@ -41,6 +47,65 @@ body {
 
   .halo-pulse {
     animation: halo-pulse 6s ease-in-out infinite;
+  }
+
+  /* Botón primario con volumen: sombra de elevación + glow cyan en
+     hover/focus, reducción a 98% al presionar. Nunca cambia de color
+     por completo, nunca rebota — según la guía de motion. */
+  .btn-primary {
+    background: var(--color-accent);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    transition: box-shadow var(--duration-fast) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-standard),
+      background var(--duration-fast) var(--ease-standard);
+  }
+  .btn-primary:hover {
+    background: var(--color-accent-hover);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45), 0 0 16px rgba(6, 182, 212, 0.35);
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  /* Botón secundario (con borde, sin relleno): mismo glow al enfocar. */
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    transition: box-shadow var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-standard);
+  }
+  .btn-secondary:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.2);
+  }
+  .btn-secondary:active {
+    transform: scale(0.98);
+  }
+
+  /* Tarjetas: elevación sutil por defecto, un poco más de profundidad y
+     glow tenue al pasar el mouse. Nunca neomorfismo, solo sombra suave. */
+  .card-surface {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: box-shadow var(--duration-normal) var(--ease-standard),
+      border-color var(--duration-normal) var(--ease-standard);
+  }
+  .card-surface:hover {
+    border-color: rgba(6, 182, 212, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 20px rgba(6, 182, 212, 0.08);
+  }
+
+  /* Inputs: glow cyan al enfocar en vez de solo cambiar el color del borde. */
+  .input-glow {
+    transition: box-shadow var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard);
+  }
+  .input-glow:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
   }
 }
 

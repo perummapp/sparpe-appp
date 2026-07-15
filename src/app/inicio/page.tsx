@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'motion/react'
 import { Search, Star, Building2, ShoppingBag, Trophy, ClipboardList, UserCircle, LogOut, Inbox, Calendar, Award } from 'lucide-react'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -68,7 +69,6 @@ export default function InicioPage() {
         await revisarNotificaciones(uid)
         intervalo = setInterval(() => revisarNotificaciones(uid), NOTIF_POLL_MS)
       }
-      // Sin usuario: no redirige. /inicio se puede explorar como invitado.
 
       setCargando(false)
     }
@@ -127,44 +127,55 @@ export default function InicioPage() {
   }
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] pb-10">
       <div className="max-w-md mx-auto px-5 pt-6 flex items-center justify-between">
-        <div className="w-9 h-9 rounded-full bg-[#2a2a2a] flex items-center justify-center">
+        <div className={`w-9 h-9 rounded-full bg-[#2a2a2a] flex items-center justify-center transition-shadow duration-220 ${email ? 'shadow-[0_0_0_1px_rgba(6,182,212,0.25)]' : ''}`}>
           <UserCircle size={20} className="text-[#e6e6e6]" />
         </div>
         {email ? (
           <>
-            <p className="text-xs text-[#9a9a9a]">{email}</p>
-            <button onClick={handleLogout} title="Cerrar sesión">
-              <LogOut size={20} className="text-[#9a9a9a]" />
+            <p className="text-xs text-muted">{email}</p>
+            <button onClick={handleLogout} title="Cerrar sesión" className="transition-opacity duration-180 hover:opacity-70">
+              <LogOut size={20} className="text-muted" />
             </button>
           </>
         ) : (
           <>
-            <p className="text-xs text-[#9a9a9a]">Explorando como invitado</p>
-            <Link href="/login" className="text-xs text-[#e29b9b] hover:underline">Ingresar</Link>
+            <p className="text-xs text-muted">Explorando como invitado</p>
+            <Link href="/login" className="text-xs text-accent-light hover:underline">Ingresar</Link>
           </>
         )}
       </div>
 
       <div className="max-w-md mx-auto px-5 mt-6 grid grid-cols-4 gap-y-5 gap-x-2">
-        {accesos.map((a) => {
+        {accesos.map((a, index) => {
           const Icon = a.icon
           const mostrarPunto = a.href === '/solicitudes' && hayNotificacion
           return (
-            <Link key={a.href} href={a.href} className="flex flex-col items-center gap-1.5 text-center">
-              <div className="relative w-12 h-12 rounded-full bg-[#f2f0ea] flex items-center justify-center">
-                <Icon size={22} className="text-[#1c1c1c]" />
-                {mostrarPunto && (
-                  <span className="absolute top-0 right-0 w-3 h-3 bg-[#a32d2d] rounded-full border-2 border-[#0d0d0d]" />
-                )}
-              </div>
-              <span className="text-[10.5px] text-[#d8d8d8] leading-tight">{a.label}</span>
-            </Link>
+            <motion.div
+              key={a.href}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.18, delay: index * 0.025, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Link href={a.href} className="flex flex-col items-center gap-1.5 text-center">
+                <motion.div
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ duration: 0.09 }}
+                  className="relative w-12 h-12 rounded-full bg-[#f2f0ea] flex items-center justify-center shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+                >
+                  <Icon size={22} className="text-[#1c1c1c]" />
+                  {mostrarPunto && (
+                    <span className="absolute top-0 right-0 w-3 h-3 bg-accent rounded-full border-2 border-[#0d0d0d]" />
+                  )}
+                </motion.div>
+                <span className="text-[10.5px] text-[#d8d8d8] leading-tight">{a.label}</span>
+              </Link>
+            </motion.div>
           )
         })}
       </div>
@@ -178,28 +189,36 @@ export default function InicioPage() {
           className="flex gap-3 overflow-x-auto pb-2 pr-5 max-w-md mx-auto scrollbar-hide scroll-smooth"
         >
           {banners.map((b, i) => (
-            <div key={i} className="min-w-[200px] bg-[#161616] border border-[#262626] rounded-xl overflow-hidden flex-shrink-0">
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.18, delay: i * 0.025, ease: [0.22, 1, 0.36, 1] }}
+              className="min-w-[200px] card-surface rounded-xl overflow-hidden flex-shrink-0"
+            >
               <div className="h-16" style={{ backgroundColor: b.color }} />
               <div className="p-3">
                 <p className="text-sm font-medium text-white">{b.titulo}</p>
-                <p className="text-xs text-[#9a9a9a] mt-0.5">{b.sub}</p>
+                <p className="text-xs text-muted mt-0.5">{b.sub}</p>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
 
       <div className="max-w-md mx-auto px-5 mt-7">
-        <Link
-          href="/sparring"
-          className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white font-medium rounded-lg py-3 flex items-center justify-center gap-2 transition"
-        >
-          <Search size={18} /> Buscar sparring ahora
-        </Link>
+        <motion.div whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }}>
+          <Link
+            href="/sparring"
+            className="btn-primary w-full text-white font-medium rounded-2xl py-3 flex items-center justify-center gap-2"
+          >
+            <Search size={18} /> Buscar sparring ahora
+          </Link>
+        </motion.div>
 
         <Link
           href="/soy-empresa"
-          className="block text-center mt-4 text-xs text-[#9a9a9a] hover:text-[#e29b9b] hover:underline"
+          className="block text-center mt-4 text-xs text-muted hover:text-accent-light transition-colors duration-180 hover:underline"
         >
           ¿Tienes una escuela, marca o promotora de eventos? Soy empresa →
         </Link>
