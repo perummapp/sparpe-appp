@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { motion } from 'motion/react'
 import { supabase } from '@/lib/supabaseClient'
 import SelectSheet from '@/components/SelectSheet'
-import CapturaSelfie from '@/components/CapturaSelfie'
 import { DISTRITOS } from '@/lib/distritos'
 import { NIVELES_EXPERIENCIA } from '@/lib/nivelExperiencia'
 import { DISCIPLINAS } from '@/lib/disciplinas'
@@ -19,15 +19,13 @@ export default function PerfilPage() {
   const [error, setError] = useState('')
   const [userId, setUserId] = useState('')
   const [nombre, setNombre] = useState('')
-  const [tipoUsuario, setTipoUsuario] = useState('sparring')
+  const [tipoUsuario, setTipoUsuario] = useState('peleador')
   const [disciplina, setDisciplina] = useState('')
   const [pesoKg, setPesoKg] = useState('')
   const [nivelExperiencia, setNivelExperiencia] = useState('')
   const [escuela, setEscuela] = useState('')
   const [distrito, setDistrito] = useState('')
   const [disponibleSparring, setDisponibleSparring] = useState(false)
-  const [fotoUrl, setFotoUrl] = useState('')
-  const [mostrarCaptura, setMostrarCaptura] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -37,46 +35,20 @@ export default function PerfilPage() {
       setUserId(userData.user.id)
 
       const { data: perfil } = await supabase.from('perfiles').select('*').eq('id', userData.user.id).single()
-
-      if (perfil?.categoria_cuenta === 'empresa') {
-        const destinos: Record<string, string> = {
-          escuela: '/escuelas/mi-escuela',
-          marca: '/tienda/mi-marca',
-          promotora: '/eventos/mi-evento',
-        }
-        router.push(destinos[perfil.tipo_usuario ?? ''] ?? '/soy-empresa')
-        return
-      }
-
       if (perfil) {
         setNombre(perfil.nombre ?? '')
-        setTipoUsuario(perfil.tipo_usuario ?? 'sparring')
+        setTipoUsuario(perfil.tipo_usuario ?? 'peleador')
         setDisciplina(perfil.disciplina ?? '')
         setPesoKg(perfil.peso_kg !== null && perfil.peso_kg !== undefined ? String(perfil.peso_kg) : '')
         setNivelExperiencia(perfil.nivel_experiencia ?? '')
         setEscuela(perfil.escuela ?? '')
         setDistrito(perfil.distrito ?? '')
         setDisponibleSparring(perfil.disponible_sparring ?? false)
-        setFotoUrl(perfil.foto_url ?? '')
       }
       setCargando(false)
     }
     cargarDatos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router])
-
-  const handleCambiarDisponible = (checked: boolean) => {
-    if (checked && !fotoUrl) {
-      setMostrarCaptura(true)
-      return
-    }
-    setDisponibleSparring(checked)
-  }
-
-  const handleSubidaSelfie = (url: string) => {
-    setFotoUrl(url)
-    setMostrarCaptura(false)
-  }
 
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -110,40 +82,28 @@ export default function PerfilPage() {
   }
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
-  const inputClass = "w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d] mb-4"
-  const labelClass = "text-sm text-[#9a9a9a] mb-1 block"
+  const inputClass = "w-full bg-surface border border-border input-glow rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] mb-4"
+  const labelClass = "text-sm text-muted mb-1 block"
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center p-6">
-      <div className="w-full max-w-sm bg-[#161616] border border-[#262626] rounded-2xl p-8">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-sm card-surface rounded-2xl p-8"
+      >
         <h1 className="text-2xl font-bold text-white mb-6">Mi perfil</h1>
-
-        <label className={labelClass}>Foto verificada</label>
-        {fotoUrl && !mostrarCaptura && (
-          <div className="flex items-center gap-3 mb-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={fotoUrl} alt="Tu selfie" className="w-14 h-14 rounded-full object-cover border border-[#333]" />
-            <button type="button" onClick={() => setMostrarCaptura(true)} className="text-xs text-[#e29b9b] hover:underline">
-              Actualizar selfie
-            </button>
-          </div>
-        )}
-        {(!fotoUrl || mostrarCaptura) && (
-          <div className="mb-4">
-            <CapturaSelfie userId={userId} onSubida={handleSubidaSelfie} />
-          </div>
-        )}
-
         <form onSubmit={handleGuardar}>
           <label className={labelClass}>Nombre</label>
           <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required className={inputClass} />
 
           <label className={labelClass}>¿Qué tipo de usuario eres?</label>
           <select value={tipoUsuario} onChange={(e) => setTipoUsuario(e.target.value)} className={inputClass}>
-            <option value="sparring">Busco sparring</option>
+            <option value="peleador">Soy peleador</option>
             <option value="fitness">Entreno por fitness/ocio</option>
             <option value="fan">Sigo el deporte de contacto</option>
           </select>
@@ -191,29 +151,29 @@ export default function PerfilPage() {
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-[#e6e6e6] mb-1 mt-1">
+          <label className="flex items-center gap-2 text-sm text-[#e6e6e6] mb-6 mt-1">
             <input
               type="checkbox"
               checked={disponibleSparring}
-              onChange={(e) => handleCambiarDisponible(e.target.checked)}
-              className="w-4 h-4 accent-[#a32d2d]"
+              onChange={(e) => setDisponibleSparring(e.target.checked)}
+              className="w-4 h-4 accent-cyan-500"
             />
             Estoy disponible para sparring ahora
           </label>
-          {!fotoUrl && (
-            <p className="text-xs text-[#6b6b6b] mb-6">Necesitas una selfie verificada para activar esto.</p>
-          )}
-          {fotoUrl && <div className="mb-6" />}
 
-          {error && <p className="text-sm text-[#e29b9b] mb-4">{error}</p>}
+          {error && <p className="text-sm text-accent-light mb-4">{error}</p>}
 
-          <button type="submit" disabled={guardando}
-            className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white font-medium rounded-lg py-2.5 transition disabled:opacity-50">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            transition={{ duration: 0.09 }}
+            type="submit" disabled={guardando}
+            className="btn-primary w-full text-white font-medium rounded-lg py-2.5 disabled:opacity-50"
+          >
             {guardando ? 'Guardando...' : 'Guardar perfil'}
-          </button>
+          </motion.button>
         </form>
-        {mensaje && <p className="text-sm text-[#e29b9b] mt-4">{mensaje}</p>}
-      </div>
+        {mensaje && <p className="text-sm text-accent-light mt-4">{mensaje}</p>}
+      </motion.div>
     </div>
   )
 }
