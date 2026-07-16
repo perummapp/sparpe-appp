@@ -18,15 +18,14 @@ const accesos = [
   { href: '/sparring', label: 'Buscar sparring', icon: Search },
   { href: '/solicitudes', label: 'Solicitudes', icon: Inbox },
   { href: '/entrenadores', label: 'Encuentra un entrenador', icon: Star },
-  { href: '/escuelas', label: 'Escuelas cerca', icon: Building2 },
+  { href: '/escuelas', label: 'Escuelas', icon: Building2 },
   { href: '/tienda', label: 'Tienda', icon: ShoppingBag },
   { href: '/eventos', label: 'Eventos', icon: Calendar },
-  { href: '/ranking', label: 'Ranking Comunidad', icon: Trophy },
-  { href: '/ranking-oficial', label: 'Ranking Oficial MMA', icon: Award },
+  { href: '/ranking', label: 'Actividad', icon: Trophy },
+  { href: '/ranking-oficial', label: 'Élite', icon: Award },
   { href: '/mis-sparring', label: 'Mis sparring', icon: ClipboardList },
   { href: '/perfil', label: 'Mi perfil', icon: UserCircle },
 ]
-
 const GAP_PX = 12
 const AUTOPLAY_MS = 3500
 const RESUME_AFTER_MS = 5000
