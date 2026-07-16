@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'motion/react'
 import { supabase } from '@/lib/supabaseClient'
 
 type Resultado = {
@@ -56,25 +57,30 @@ export default function ResultadosPage() {
   }
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
   if (!esProfesional) {
     return (
       <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center p-6">
-        <div className="w-full max-w-sm bg-[#161616] border border-[#262626] rounded-2xl p-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-sm card-surface rounded-2xl p-8 text-center"
+        >
           <h1 className="text-xl font-bold text-white mb-3">Mis resultados</h1>
-          <p className="text-sm text-[#9a9a9a] mb-6">
+          <p className="text-sm text-muted mb-6">
             Esta sección es solo para peleadores con trayectoria profesional o amateur verificada — un historial oficial de peleas reales, distinto de tus sparrings informales.
           </p>
           <Link
             href="/resultados/solicitar-profesional"
-            className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 transition"
+            className="btn-primary block w-full text-center text-white text-sm font-medium rounded-lg py-2.5"
           >
             Solicitar acceso
           </Link>
-          <Link href="/inicio" className="text-sm text-[#e29b9b] hover:underline block mt-5">← Inicio</Link>
-        </div>
+          <Link href="/inicio" className="text-sm text-accent-light hover:underline block mt-5">← Inicio</Link>
+        </motion.div>
       </div>
     )
   }
@@ -87,31 +93,37 @@ export default function ResultadosPage() {
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-white">Mis resultados</h1>
-          <Link href="/resultados/nuevo" className="text-sm text-[#e29b9b] hover:underline">+ Nuevo</Link>
+          <Link href="/resultados/nuevo" className="text-sm text-accent-light hover:underline">+ Nuevo</Link>
         </div>
 
-        {mensaje && <p className="text-sm text-[#e29b9b] mb-4">{mensaje}</p>}
-        {resultados.length === 0 && <p className="text-sm text-[#9a9a9a]">Todavía no tienes resultados cargados.</p>}
+        {mensaje && <p className="text-sm text-accent-light mb-4">{mensaje}</p>}
+        {resultados.length === 0 && <p className="text-sm text-muted">Todavía no tienes resultados cargados.</p>}
 
         <div className="space-y-3">
-          {resultados.map((r) => {
+          {resultados.map((r, index) => {
             const soyElRival = r.rival_id === userId
             const puedoResponder = soyElRival && r.estado === 'pendiente'
             return (
-              <div key={r.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
+              <motion.div
+                key={r.id}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.18, delay: index * 0.025, ease: [0.22, 1, 0.36, 1] }}
+                className="card-surface rounded-xl p-4"
+              >
                 <p className="text-white font-medium">{r.peleador_id === userId ? `vs. ${r.rival_nombre}` : 'Cargado por el rival'}</p>
-                <p className="text-sm text-[#9a9a9a] mt-1">{r.fecha} · {r.disciplina} · {r.categoria_peso} · {r.contexto}</p>
-                <p className="text-sm text-[#9a9a9a] mt-1">Resultado (según quien cargó): <span className="text-white">{r.resultado}</span></p>
+                <p className="text-sm text-muted mt-1">{r.fecha} · {r.disciplina} · {r.categoria_peso} · {r.contexto}</p>
+                <p className="text-sm text-muted mt-1">Resultado (según quien cargó): <span className="text-white">{r.resultado}</span></p>
                 <p className="text-sm mt-1">Estado: <span className={`font-medium ${estadoColor(r.estado)}`}>{r.estado}</span></p>
                 {puedoResponder && (
                   <div className="flex gap-2 mt-3">
                     <button onClick={() => actualizarEstado(r.id, 'verificado')}
-                      className="bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm rounded-lg px-3 py-1.5 transition">Confirmar</button>
+                      className="btn-primary text-white text-sm rounded-lg px-3 py-1.5">Confirmar</button>
                     <button onClick={() => actualizarEstado(r.id, 'disputado')}
-                      className="border border-[#a32d2d] text-[#e29b9b] text-sm rounded-lg px-3 py-1.5 hover:bg-[#a32d2d] hover:text-white transition">Disputar</button>
+                      className="btn-secondary text-accent-light text-sm rounded-lg px-3 py-1.5">Disputar</button>
                   </div>
                 )}
-              </div>
+              </motion.div>
             )
           })}
         </div>
