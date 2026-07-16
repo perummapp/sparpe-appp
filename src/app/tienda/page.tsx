@@ -36,6 +36,7 @@ const DISCIPLINAS_TIENDA = ['Boxeo', 'MMA', 'Muay Thai', 'Jiu-Jitsu']
 
 export default function TiendaPage() {
   const [cargando, setCargando] = useState(true)
+  const [categoriaCuenta, setCategoriaCuenta] = useState('persona')
   const [filtroDisciplina, setFiltroDisciplina] = useState('')
   const router = useRouter()
 
@@ -43,6 +44,10 @@ export default function TiendaPage() {
     const cargar = async () => {
       const { data: userData } = await supabase.auth.getUser()
       if (!userData.user) { router.push('/login'); return }
+
+      const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', userData.user.id).single()
+      setCategoriaCuenta(perfil?.categoria_cuenta ?? 'persona')
+
       setCargando(false)
     }
     cargar()
@@ -71,13 +76,6 @@ export default function TiendaPage() {
         <p className="text-sm text-muted mb-5">
           Catálogo de muestra de artículos de contacto. Todavía no hay marcas verificadas publicando aquí.
         </p>
-
-        <Link
-          href="/tienda/mi-marca"
-          className="btn-primary block w-full text-center text-white text-sm font-medium rounded-lg py-2.5 mb-6"
-        >
-          + Publicar mi marca
-        </Link>
 
         <div className="flex gap-2 overflow-x-auto pb-1 mb-6 scrollbar-hide">
           <button type="button" onClick={() => setFiltroDisciplina('')} className={chipClass(filtroDisciplina === '')}>
@@ -108,6 +106,15 @@ export default function TiendaPage() {
             </motion.div>
           ))}
         </div>
+
+        {categoriaCuenta === 'empresa' && (
+          <Link
+            href="/tienda/mi-marca"
+            className="block text-center mt-8 text-xs text-muted hover:text-accent-light transition-colors duration-180 hover:underline"
+          >
+            ¿Tienes una marca? Publícala →
+          </Link>
+        )}
       </div>
     </div>
   )

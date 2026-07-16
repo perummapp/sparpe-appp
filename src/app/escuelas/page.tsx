@@ -28,6 +28,7 @@ type Oferta = {
 export default function EscuelasPage() {
   const [cargando, setCargando] = useState(true)
   const [userId, setUserId] = useState('')
+  const [categoriaCuenta, setCategoriaCuenta] = useState('persona')
   const [escuelas, setEscuelas] = useState<Escuela[]>([])
   const [miEscuela, setMiEscuela] = useState<Escuela | null>(null)
   const [ofertas, setOfertas] = useState<Oferta[]>([])
@@ -40,6 +41,11 @@ export default function EscuelasPage() {
       const { data: userData } = await supabase.auth.getUser()
       const uid = userData.user?.id ?? ''
       setUserId(uid)
+
+      if (uid) {
+        const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', uid).single()
+        setCategoriaCuenta(perfil?.categoria_cuenta ?? 'persona')
+      }
 
       const { data: publicas } = await supabase
         .from('escuelas')
@@ -94,22 +100,6 @@ export default function EscuelasPage() {
         <p className="text-sm text-muted mb-5">
           Directorio de escuelas y gimnasios de deportes de contacto en Perú.
         </p>
-
-        {userId ? (
-          <Link
-            href="/escuelas/mi-escuela"
-            className="btn-primary block w-full text-center text-white text-sm font-medium rounded-lg py-2.5 mb-6"
-          >
-            {miEscuela ? 'Editar mi escuela' : '+ Registrar mi escuela'}
-          </Link>
-        ) : (
-          <Link
-            href="/login"
-            className="btn-secondary block w-full text-center text-muted text-sm font-medium rounded-lg py-2.5 mb-6"
-          >
-            Inicia sesión para registrar tu escuela
-          </Link>
-        )}
 
         {ofertas.length > 0 && (
           <div className="mb-6">
@@ -169,6 +159,15 @@ export default function EscuelasPage() {
             </div>
           ))}
         </div>
+
+        {categoriaCuenta === 'empresa' && (
+          <Link
+            href="/escuelas/mi-escuela"
+            className="block text-center mt-8 text-xs text-muted hover:text-accent-light transition-colors duration-180 hover:underline"
+          >
+            {miEscuela ? 'Editar mi escuela' : '¿Tienes una escuela? Regístrala →'}
+          </Link>
+        )}
       </div>
     </div>
   )
