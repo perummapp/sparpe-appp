@@ -81,7 +81,7 @@ export default function EntrenadoresPage() {
   })
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
   return (
@@ -89,9 +89,9 @@ export default function EntrenadoresPage() {
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold text-white">Encuentra un entrenador</h1>
-          <Link href="/inicio" className="text-sm text-[#e29b9b] hover:underline">← Inicio</Link>
+          <Link href="/inicio" className="text-sm text-accent-light hover:underline">← Inicio</Link>
         </div>
-        <p className="text-sm text-[#9a9a9a] mb-5">
+        <p className="text-sm text-muted mb-5">
           Entrenadores y peleadores que ofrecen clases particulares.
         </p>
 
@@ -111,7 +111,7 @@ export default function EntrenadoresPage() {
         </div>
 
         {entrenadoresFiltrados.length === 0 && (
-          <p className="text-sm text-[#9a9a9a]">
+          <p className="text-sm text-muted">
             Todavía no hay entrenadores verificados con esos filtros.
           </p>
         )}
@@ -120,19 +120,19 @@ export default function EntrenadoresPage() {
           {entrenadoresFiltrados.map((e) => {
             const yaSigo = siguiendo.has(e.id)
             return (
-              <div key={e.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
+              <div key={e.id} className="card-surface rounded-xl p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="text-white font-medium">{e.nombre}</p>
-                    <p className="text-sm text-[#9a9a9a] mt-1">
+                    <p className="text-sm text-muted mt-1">
                       {e.especialidad || '—'} · {e.distrito || 'Sin distrito'}
                     </p>
                   </div>
                   {userId ? (
                     <button
                       onClick={() => toggleSeguir(e.id)}
-                      className={`shrink-0 text-xs rounded-lg px-3 py-1.5 border transition ${
-                        yaSigo ? 'border-[#333] text-[#9a9a9a]' : 'bg-[#a32d2d] border-[#a32d2d] text-white hover:bg-[#8f2626]'
+                      className={`shrink-0 text-xs rounded-lg px-3 py-1.5 transition-colors duration-180 ${
+                        yaSigo ? 'btn-secondary text-muted' : 'btn-primary text-white'
                       }`}
                     >
                       {yaSigo ? 'Siguiendo' : 'Seguir'}
@@ -140,7 +140,7 @@ export default function EntrenadoresPage() {
                   ) : (
                     <Link
                       href="/login"
-                      className="shrink-0 text-xs rounded-lg px-3 py-1.5 border border-[#333] text-[#9a9a9a] hover:border-[#a32d2d]"
+                      className="btn-secondary shrink-0 text-xs rounded-lg px-3 py-1.5 text-muted"
                     >
                       Seguir
                     </Link>
@@ -149,9 +149,9 @@ export default function EntrenadoresPage() {
 
                 {e.descripcion && <p className="text-sm text-[#d8d8d8] mt-2">{e.descripcion}</p>}
 
-                <div className="flex items-center gap-4 mt-2 text-xs text-[#9a9a9a]">
+                <div className="flex items-center gap-4 mt-2 text-xs text-muted">
                   {e.total_resenas > 0 && (
-                    <span className="flex items-center gap-1"><Star size={12} className="text-[#e29b9b]" /> {e.calificacion_promedio.toFixed(1)} ({e.total_resenas})</span>
+                    <span className="flex items-center gap-1"><Star size={12} className="text-accent-light" /> {e.calificacion_promedio.toFixed(1)} ({e.total_resenas})</span>
                   )}
                   <span className="flex items-center gap-1"><Users size={12} /> {e.total_seguidores} seguidores</span>
                 </div>
@@ -168,7 +168,7 @@ export default function EntrenadoresPage() {
 
         <Link
           href="/entrenadores/mi-entrenador"
-          className="block text-center mt-8 text-xs text-[#9a9a9a] hover:text-[#e29b9b] hover:underline"
+          className="block text-center mt-8 text-xs text-muted hover:text-accent-light transition-colors duration-180 hover:underline"
         >
           ¿Enseñas tú? Ofrece clases personalizadas →
         </Link>
