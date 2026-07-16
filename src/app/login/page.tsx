@@ -38,7 +38,7 @@ export default function LoginPage() {
       <div className="absolute inset-0 -z-20">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/hero-login.jpg"
+          src="/hero-login.png"
           alt=""
           className="w-full h-full object-cover"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
