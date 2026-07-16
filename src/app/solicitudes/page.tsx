@@ -111,7 +111,7 @@ export default function SolicitudesPage() {
   }
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
   const estadoColor = (estado: string) =>
@@ -131,7 +131,7 @@ export default function SolicitudesPage() {
       return (
         <button
           onClick={() => handleConfirmar(s)}
-          className="mt-2 bg-[#a32d2d] hover:bg-[#8f2626] text-white text-xs rounded-lg px-3 py-1.5 transition"
+          className="btn-primary mt-2 text-white text-xs rounded-lg px-3 py-1.5"
         >
           Confirmar que el sparring se realizó
         </button>
@@ -146,7 +146,7 @@ export default function SolicitudesPage() {
       return (
         <div className="mt-2 flex items-center gap-3">
           <p className="text-xs text-[#7fd1a3]">✓ Confirmado por ti</p>
-          <button onClick={() => setAbiertoResenaId(s.id)} className="text-xs text-[#e29b9b] hover:underline">
+          <button onClick={() => setAbiertoResenaId(s.id)} className="text-xs text-accent-light hover:underline">
             Dejar reseña
           </button>
         </div>
@@ -154,8 +154,8 @@ export default function SolicitudesPage() {
     }
 
     return (
-      <div className="mt-3 border-t border-[#262626] pt-3 space-y-2">
-        <p className="text-xs text-[#9a9a9a]">
+      <div className="mt-3 border-t border-border pt-3 space-y-2">
+        <p className="text-xs text-muted">
           Tu reseña es interna: nadie más la ve, solo se usa para revisar reportes.
         </p>
         <div className="flex gap-1">
@@ -164,7 +164,7 @@ export default function SolicitudesPage() {
               key={n}
               type="button"
               onClick={() => setCalificacion(n)}
-              className={`text-xl ${n <= calificacion ? 'text-[#e29b9b]' : 'text-[#333]'}`}
+              className={`text-xl transition-colors duration-180 ${n <= calificacion ? 'text-accent-light' : 'text-[#333]'}`}
             >
               ★
             </button>
@@ -175,17 +175,17 @@ export default function SolicitudesPage() {
           onChange={(e) => setComentario(e.target.value)}
           placeholder="Comentario (opcional) — solo visible internamente, ej. reportar algo negativo o positivo"
           rows={2}
-          className="w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d]"
+          className="input-glow w-full bg-[#1e1e1e] border border-border rounded-lg px-3 py-2 text-sm text-white placeholder-[#6b6b6b]"
         />
         <div className="flex gap-2">
           <button
             onClick={() => handleEnviarResena(s)}
             disabled={enviandoResena}
-            className="bg-[#a32d2d] hover:bg-[#8f2626] text-white text-xs rounded-lg px-3 py-1.5 transition disabled:opacity-50"
+            className="btn-primary text-white text-xs rounded-lg px-3 py-1.5 disabled:opacity-50"
           >
             {enviandoResena ? 'Enviando...' : 'Enviar reseña'}
           </button>
-          <button onClick={() => setAbiertoResenaId(null)} className="border border-[#333] text-[#9a9a9a] text-xs rounded-lg px-3 py-1.5">
+          <button onClick={() => setAbiertoResenaId(null)} className="btn-secondary text-muted text-xs rounded-lg px-3 py-1.5">
             Cancelar
           </button>
         </div>
@@ -198,33 +198,33 @@ export default function SolicitudesPage() {
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-white">Solicitudes</h1>
-          <Link href="/sparring" className="text-sm text-[#e29b9b] hover:underline">← Buscar sparring</Link>
+          <Link href="/sparring" className="text-sm text-accent-light hover:underline">← Buscar sparring</Link>
         </div>
 
-        {mensaje && <p className="text-sm text-[#e29b9b] mb-4">{mensaje}</p>}
+        {mensaje && <p className="text-sm text-accent-light mb-4">{mensaje}</p>}
 
-        <h2 className="text-sm text-[#9a9a9a] uppercase tracking-wide mb-2">Recibidas</h2>
-        {recibidas.length === 0 && <p className="text-sm text-[#9a9a9a] mb-6">No tienes solicitudes recibidas.</p>}
+        <h2 className="text-sm text-muted uppercase tracking-wide mb-2">Recibidas</h2>
+        {recibidas.length === 0 && <p className="text-sm text-muted mb-6">No tienes solicitudes recibidas.</p>}
         <div className="space-y-3 mb-8">
           {recibidas.map((s) => {
             const tieneNotificacion = s.estado === 'pendiente' || tieneMensajeNoLeido(s, false)
             return (
-              <div key={s.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
+              <div key={s.id} className="card-surface rounded-xl p-4">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-white font-medium">{s.solicitante_nombre}</p>
-                  {tieneNotificacion && <span className="shrink-0 mt-1 w-2 h-2 bg-[#a32d2d] rounded-full" />}
+                  {tieneNotificacion && <span className="shrink-0 mt-1 w-2 h-2 bg-accent rounded-full" />}
                 </div>
-                <p className="text-sm text-[#9a9a9a] mt-1">{s.fecha_propuesta || 'Sin fecha'} · {s.gimnasio_propuesto || 'Lugar por coordinar'}</p>
-                {s.mensaje && <p className="text-sm text-[#9a9a9a] mt-1 italic">&quot;{s.mensaje}&quot;</p>}
+                <p className="text-sm text-muted mt-1">{s.fecha_propuesta || 'Sin fecha'} · {s.gimnasio_propuesto || 'Lugar por coordinar'}</p>
+                {s.mensaje && <p className="text-sm text-muted mt-1 italic">&quot;{s.mensaje}&quot;</p>}
                 <p className="text-sm mt-1">Estado: <span className={`font-medium ${estadoColor(s.estado)}`}>{s.estado}</span></p>
-                <Link href={`/solicitudes/${s.id}`} className="text-sm text-[#e29b9b] hover:underline mt-2 inline-flex items-center gap-1.5">
+                <Link href={`/solicitudes/${s.id}`} className="text-sm text-accent-light hover:underline mt-2 inline-flex items-center gap-1.5">
                   Abrir chat
-                  {tieneMensajeNoLeido(s, false) && <span className="w-1.5 h-1.5 bg-[#a32d2d] rounded-full" />}
+                  {tieneMensajeNoLeido(s, false) && <span className="w-1.5 h-1.5 bg-accent rounded-full" />}
                 </Link>
                 {s.estado === 'pendiente' && (
                   <div className="flex gap-2 mt-2">
-                    <button onClick={() => responder(s.id, 'aceptada')} className="bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm rounded-lg px-3 py-1.5 transition">Aceptar</button>
-                    <button onClick={() => responder(s.id, 'rechazada')} className="border border-[#a32d2d] text-[#e29b9b] text-sm rounded-lg px-3 py-1.5 hover:bg-[#a32d2d] hover:text-white transition">Rechazar</button>
+                    <button onClick={() => responder(s.id, 'aceptada')} className="btn-primary text-white text-sm rounded-lg px-3 py-1.5">Aceptar</button>
+                    <button onClick={() => responder(s.id, 'rechazada')} className="btn-secondary text-accent-light text-sm rounded-lg px-3 py-1.5">Rechazar</button>
                   </div>
                 )}
                 {renderAccionesSparring(s)}
@@ -233,22 +233,22 @@ export default function SolicitudesPage() {
           })}
         </div>
 
-        <h2 className="text-sm text-[#9a9a9a] uppercase tracking-wide mb-2">Enviadas</h2>
-        {enviadas.length === 0 && <p className="text-sm text-[#9a9a9a]">No has enviado solicitudes.</p>}
+        <h2 className="text-sm text-muted uppercase tracking-wide mb-2">Enviadas</h2>
+        {enviadas.length === 0 && <p className="text-sm text-muted">No has enviado solicitudes.</p>}
         <div className="space-y-3">
           {enviadas.map((s) => {
             const tieneNotificacion = tieneMensajeNoLeido(s, true)
             return (
-              <div key={s.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
+              <div key={s.id} className="card-surface rounded-xl p-4">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-white font-medium">{s.receptor_nombre}</p>
-                  {tieneNotificacion && <span className="shrink-0 mt-1 w-2 h-2 bg-[#a32d2d] rounded-full" />}
+                  {tieneNotificacion && <span className="shrink-0 mt-1 w-2 h-2 bg-accent rounded-full" />}
                 </div>
-                <p className="text-sm text-[#9a9a9a] mt-1">{s.fecha_propuesta || 'Sin fecha'} · {s.gimnasio_propuesto || 'Lugar por coordinar'}</p>
+                <p className="text-sm text-muted mt-1">{s.fecha_propuesta || 'Sin fecha'} · {s.gimnasio_propuesto || 'Lugar por coordinar'}</p>
                 <p className="text-sm mt-1">Estado: <span className={`font-medium ${estadoColor(s.estado)}`}>{s.estado}</span></p>
-                <Link href={`/solicitudes/${s.id}`} className="text-sm text-[#e29b9b] hover:underline mt-2 inline-flex items-center gap-1.5">
+                <Link href={`/solicitudes/${s.id}`} className="text-sm text-accent-light hover:underline mt-2 inline-flex items-center gap-1.5">
                   Abrir chat
-                  {tieneNotificacion && <span className="w-1.5 h-1.5 bg-[#a32d2d] rounded-full" />}
+                  {tieneNotificacion && <span className="w-1.5 h-1.5 bg-accent rounded-full" />}
                 </Link>
                 {renderAccionesSparring(s)}
               </div>

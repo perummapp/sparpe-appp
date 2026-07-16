@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'motion/react'
 import { Search, Star, Building2, ShoppingBag, Trophy, ClipboardList, UserCircle, LogOut, Inbox, Calendar, Award } from 'lucide-react'
@@ -34,10 +33,10 @@ const NOTIF_POLL_MS = 15000
 
 export default function InicioPage() {
   const [cargando, setCargando] = useState(true)
+  const [estaLogueado, setEstaLogueado] = useState(false)
   const [email, setEmail] = useState('')
   const [hayNotificacion, setHayNotificacion] = useState(false)
   const [banners, setBanners] = useState<Banner[]>([])
-  const router = useRouter()
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const autoplayRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -68,29 +67,30 @@ export default function InicioPage() {
   }
 
   useEffect(() => {
-    let uid = ''
     let intervalo: ReturnType<typeof setInterval> | null = null
 
     const iniciar = async () => {
       const { data } = await supabase.auth.getUser()
-      if (!data.user) {
-        router.push('/login')
-        return
+
+      if (data.user) {
+        setEstaLogueado(true)
+        setEmail(data.user.email ?? '')
+        await revisarNotificaciones(data.user.id)
+        intervalo = setInterval(() => revisarNotificaciones(data.user!.id), NOTIF_POLL_MS)
       }
-      uid = data.user.id
-      setEmail(data.user.email ?? '')
-      await revisarNotificaciones(uid)
+      // Sin usuario: no redirige — Inicio es visible como invitado.
+      // Las secciones que sí requieren cuenta (sparring, perfil, mis-sparring,
+      // solicitudes) ya redirigen solas a /login al tocarlas.
+
       await cargarBanners()
       setCargando(false)
-
-      intervalo = setInterval(() => revisarNotificaciones(uid), NOTIF_POLL_MS)
     }
     iniciar()
 
     return () => {
       if (intervalo) clearInterval(intervalo)
     }
-  }, [router])
+  }, [])
 
   const avanzarCarrusel = () => {
     const el = scrollRef.current
@@ -136,7 +136,7 @@ export default function InicioPage() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/login')
+    window.location.reload()
   }
 
   if (cargando) {
@@ -149,16 +149,35 @@ export default function InicioPage() {
         <div className="w-9 h-9 rounded-full card-surface flex items-center justify-center">
           <UserCircle size={20} className="text-[#e6e6e6]" />
         </div>
-        <p className="text-xs text-muted">{email}</p>
-        <button onClick={handleLogout} title="Cerrar sesión" className="transition-transform duration-180 active:scale-95">
-          <LogOut size={20} className="text-muted" />
-        </button>
+        {estaLogueado ? (
+          <>
+            <p className="text-xs text-muted">{email}</p>
+            <button onClick={handleLogout} title="Cerrar sesión" className="transition-transform duration-180 active:scale-95">
+              <LogOut size={20} className="text-muted" />
+            </button>
+          </>
+        ) : (
+          <Link href="/login" className="text-xs text-accent-light hover:underline">
+            Iniciar sesión
+          </Link>
+        )}
       </div>
+
+      {!estaLogueado && (
+        <div className="max-w-md mx-auto px-5 mt-4">
+          <div className="card-surface rounded-xl p-3 flex items-center justify-between gap-3">
+            <p className="text-xs text-[#d8d8d8]">Estás viendo SparPe como invitado.</p>
+            <Link href="/login" className="btn-primary text-white text-xs font-medium rounded-lg px-3 py-1.5 shrink-0">
+              Crear cuenta
+            </Link>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-md mx-auto px-5 mt-6 grid grid-cols-4 gap-y-5 gap-x-2">
         {accesos.map((a, index) => {
           const Icon = a.icon
-          const mostrarPunto = a.href === '/solicitudes' && hayNotificacion
+          const mostrarPunto = estaLogueado && a.href === '/solicitudes' && hayNotificacion
           return (
             <motion.div
               key={a.href}
