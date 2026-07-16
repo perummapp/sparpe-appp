@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { motion } from 'motion/react'
 import { supabase } from '@/lib/supabaseClient'
 import SelectSheet from '@/components/SelectSheet'
 import { DISCIPLINAS } from '@/lib/disciplinas'
@@ -47,9 +48,6 @@ export default function EventosPage() {
         const { data: perfil } = await supabase.from('perfiles').select('categoria_cuenta').eq('id', userData.user.id).single()
         setCategoriaCuenta(perfil?.categoria_cuenta ?? 'persona')
       }
-      // Sin usuario: no redirige, categoriaCuenta se queda en 'persona' (el botón
-      // de "Publicar mi evento" ya solo aparece si es 'empresa', así que un
-      // invitado nunca lo ve — no hace falta lógica extra para eso.
 
       const hoy = new Date().toISOString().slice(0, 10)
 
@@ -74,7 +72,7 @@ export default function EventosPage() {
   })
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
   const opcionesDisciplina = [{ value: '', label: 'Todas las disciplinas' }, ...DISCIPLINAS.map((d) => ({ value: d, label: d }))]
@@ -85,16 +83,16 @@ export default function EventosPage() {
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-1">
           <h1 className="text-2xl font-bold text-white">Eventos</h1>
-          <Link href="/inicio" className="text-sm text-[#e29b9b] hover:underline">← Inicio</Link>
+          <Link href="/inicio" className="text-sm text-accent-light hover:underline">← Inicio</Link>
         </div>
-        <p className="text-sm text-[#9a9a9a] mb-5">
+        <p className="text-sm text-muted mb-5">
           Eventos de deportes de contacto verificados en Perú, ordenados por fecha.
         </p>
 
         {categoriaCuenta === 'empresa' && (
           <Link
             href="/eventos/mi-evento"
-            className="block w-full text-center bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2.5 mb-6 transition"
+            className="block w-full text-center btn-primary text-white text-sm font-medium rounded-lg py-2.5 mb-6"
           >
             + Publicar / editar mis eventos
           </Link>
@@ -116,26 +114,34 @@ export default function EventosPage() {
         </div>
 
         {eventosFiltrados.length === 0 && (
-          <p className="text-sm text-[#9a9a9a]">
+          <p className="text-sm text-muted">
             Todavía no hay eventos verificados próximos con esos filtros.
           </p>
         )}
 
         <div className="space-y-3">
-          {eventosFiltrados.map((e) => (
-            <div key={e.id} className="bg-[#161616] border border-[#262626] rounded-xl overflow-hidden">
-              {e.imagen_url && (
-                <div className="h-28 w-full bg-[#1e1e1e]">
+          {eventosFiltrados.map((e, index) => (
+            <motion.div
+              key={e.id}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.18, delay: index * 0.025, ease: [0.22, 1, 0.36, 1] }}
+              className="card-surface rounded-xl overflow-hidden"
+            >
+              {e.imagen_url ? (
+                <div className="w-full aspect-[4/5] bg-surface">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={e.imagen_url} alt={e.titulo} className="h-full w-full object-cover" />
                 </div>
+              ) : (
+                <div className="w-full aspect-[4/5] bg-surface flex items-center justify-center text-xs text-[#6b6b6b]">Sin afiche aún</div>
               )}
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-white font-medium">{e.titulo}</p>
-                  <span className="shrink-0 text-xs text-[#e29b9b] font-medium">{formatoFecha(e.fecha)}</span>
+                  <span className="shrink-0 text-xs text-accent-light font-medium">{formatoFecha(e.fecha)}</span>
                 </div>
-                <p className="text-sm text-[#9a9a9a] mt-1">
+                <p className="text-sm text-muted mt-1">
                   {e.disciplina || '—'} · {e.sede || 'Sede por confirmar'}{e.ciudad ? ` · ${e.ciudad}` : ''}
                 </p>
                 {e.nombre_negocio && <p className="text-xs text-[#6b6b6b] mt-0.5">Organiza: {e.nombre_negocio}</p>}
@@ -145,18 +151,18 @@ export default function EventosPage() {
                     <span className="text-sm text-white">Desde S/ {e.precio_referencial}</span>
                   ) : <span />}
                   {e.link_compra && (
-                    <a href={e.link_compra} target="_blank" rel="noopener noreferrer" className="bg-[#a32d2d] hover:bg-[#8f2626] text-white text-xs font-medium rounded-lg px-3 py-1.5 transition">Comprar entradas</a>
+                    <a href={e.link_compra} target="_blank" rel="noopener noreferrer" className="btn-primary text-white text-xs font-medium rounded-lg px-3 py-1.5">Comprar entradas</a>
                   )}
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {userId && categoriaCuenta !== 'empresa' && (
           <Link
             href="/soy-empresa"
-            className="block text-center mt-8 text-xs text-[#9a9a9a] hover:text-[#e29b9b] hover:underline"
+            className="block text-center mt-8 text-xs text-muted hover:text-accent-light transition-colors duration-180 hover:underline"
           >
             ¿Eres una promotora y quieres promocionar tu evento? →
           </Link>
