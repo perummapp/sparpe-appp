@@ -190,7 +190,7 @@ export default function InicioPage() {
             className="flex gap-3 overflow-x-auto pb-2 pr-5 max-w-md mx-auto scrollbar-hide scroll-smooth"
           >
             {banners.map((b) => (
-              <div key={b.id} className="min-w-[200px] card-surface rounded-xl overflow-hidden flex-shrink-0">
+              <div key={b.id} className="w-[220px] shrink-0 card-surface rounded-xl overflow-hidden">
                 <div className="aspect-video w-full" style={{ backgroundColor: b.color_fallback ?? '#1e1e1e' }}>
                   {b.imagen_url && (
                     // eslint-disable-next-line @next/next/no-img-element
