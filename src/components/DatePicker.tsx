@@ -64,24 +64,24 @@ export default function DatePicker({ value, onChange, placeholder }: DatePickerP
       <button
         type="button"
         onClick={() => setAbierto(!abierto)}
-        className="w-full flex items-center justify-between bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2.5 text-sm text-left focus:outline-none focus:border-[#a32d2d]"
+        className="input-glow w-full flex items-center justify-between bg-[#1e1e1e] border border-border rounded-lg px-3 py-2.5 text-sm text-left"
       >
         <span className={value ? 'text-white' : 'text-[#6b6b6b]'}>
           {value ? formatoLegible(value) : (placeholder || 'Selecciona una fecha')}
         </span>
-        <CalendarIcon size={16} className="text-[#9a9a9a]" />
+        <CalendarIcon size={16} className="text-muted" />
       </button>
 
       {abierto && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setAbierto(false)} />
-          <div className="absolute z-50 mt-2 w-64 bg-[#161616] border border-[#262626] rounded-xl p-3 shadow-lg">
+          <div className="card-surface absolute z-50 mt-2 w-64 rounded-xl p-3">
             <div className="flex items-center justify-between mb-2">
-              <button type="button" onClick={() => cambiarMes(-1)} className="p-1 text-[#9a9a9a] hover:text-white">
+              <button type="button" onClick={() => cambiarMes(-1)} className="p-1 text-muted hover:text-white transition-colors duration-180">
                 <ChevronLeft size={18} />
               </button>
               <p className="text-sm text-white font-medium">{meses[mes]} {anio}</p>
-              <button type="button" onClick={() => cambiarMes(1)} className="p-1 text-[#9a9a9a] hover:text-white">
+              <button type="button" onClick={() => cambiarMes(1)} className="p-1 text-muted hover:text-white transition-colors duration-180">
                 <ChevronRight size={18} />
               </button>
             </div>
@@ -103,9 +103,9 @@ export default function DatePicker({ value, onChange, placeholder }: DatePickerP
                     key={dia}
                     type="button"
                     onClick={() => seleccionar(dia)}
-                    className={`aspect-square rounded-lg text-xs flex items-center justify-center transition
-                      ${esSeleccionado ? 'bg-[#a32d2d] text-white font-medium' : 'text-[#d8d8d8] hover:bg-[#262626]'}
-                      ${esHoy && !esSeleccionado ? 'border border-[#a32d2d]' : ''}`}
+                    className={`aspect-square rounded-lg text-xs flex items-center justify-center transition-colors duration-180
+                      ${esSeleccionado ? 'bg-accent text-white font-medium' : 'text-[#d8d8d8] hover:bg-[#262626]'}
+                      ${esHoy && !esSeleccionado ? 'border border-accent' : ''}`}
                   >
                     {dia}
                   </button>
