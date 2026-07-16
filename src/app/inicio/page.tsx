@@ -8,10 +8,10 @@ import { Search, Star, Building2, ShoppingBag, Trophy, ClipboardList, UserCircle
 import { supabase } from '@/lib/supabaseClient'
 
 const banners = [
-  { titulo: 'Noche de título', sub: 'Lima Boxing Arena · 26 jul', color: '#5a1414' },
-  { titulo: 'Team Fuego Lima', sub: 'Primera clase gratis', color: '#1d3d33' },
-  { titulo: 'Everlast Perú', sub: '20% dcto en guantes', color: '#3a2f10' },
-  { titulo: 'Invita y sube', sub: '5 amigos = top of view', color: '#4a1414' },
+  { titulo: 'Noche de título', sub: 'Lima Boxing Arena · 26 jul', color: '#5a1414', imagen_url: '' },
+  { titulo: 'Team Fuego Lima', sub: 'Primera clase gratis', color: '#1d3d33', imagen_url: '' },
+  { titulo: 'Everlast Perú', sub: '20% dcto en guantes', color: '#3a2f10', imagen_url: '' },
+  { titulo: 'Invita y sube', sub: '5 amigos = top of view', color: '#4a1414', imagen_url: '' },
 ]
 
 const accesos = [
@@ -178,7 +178,12 @@ export default function InicioPage() {
         >
           {banners.map((b, i) => (
             <div key={i} className="min-w-[200px] card-surface rounded-xl overflow-hidden flex-shrink-0">
-              <div className="h-16" style={{ backgroundColor: b.color }} />
+              <div className="aspect-video w-full" style={{ backgroundColor: b.color }}>
+                {b.imagen_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={b.imagen_url} alt={b.titulo} className="w-full h-full object-cover" />
+                )}
+              </div>
               <div className="p-3">
                 <p className="text-sm font-medium text-white">{b.titulo}</p>
                 <p className="text-xs text-muted mt-0.5">{b.sub}</p>

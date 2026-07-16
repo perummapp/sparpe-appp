@@ -105,10 +105,12 @@ export default function TiendaPage() {
               className="card-surface rounded-xl overflow-hidden flex flex-col"
             >
               {p.imagen_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.imagen_url} alt={p.nombre} className="w-full h-24 object-cover" />
+                <div className="w-full aspect-square bg-surface">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.imagen_url} alt={p.nombre} className="w-full h-full object-cover" />
+                </div>
               ) : (
-                <div className="w-full h-24 bg-surface flex items-center justify-center text-[10px] text-[#6b6b6b]">Sin foto aún</div>
+                <div className="w-full aspect-square bg-surface flex items-center justify-center text-[10px] text-[#6b6b6b]">Sin foto aún</div>
               )}
               <div className="p-3 flex-1 flex flex-col">
                 <p className="text-white text-sm font-medium leading-tight">{p.nombre}</p>
