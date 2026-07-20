@@ -35,6 +35,19 @@ export default function PerfilPage() {
       setUserId(userData.user.id)
 
       const { data: perfil } = await supabase.from('perfiles').select('*').eq('id', userData.user.id).single()
+
+      // Cuenta de empresa: no le corresponde este formulario de peleador,
+      // la mandamos directo a la pantalla de gestión de su negocio.
+      if (perfil?.categoria_cuenta === 'empresa') {
+        const destinos: Record<string, string> = {
+          escuela: '/escuelas/mi-escuela',
+          marca: '/tienda/mi-marca',
+          promotora: '/eventos/mi-evento',
+        }
+        router.push(destinos[perfil.tipo_usuario ?? ''] ?? '/soy-empresa')
+        return
+      }
+
       if (perfil) {
         setNombre(perfil.nombre ?? '')
         setTipoUsuario(perfil.tipo_usuario ?? 'peleador')
@@ -48,6 +61,7 @@ export default function PerfilPage() {
       setCargando(false)
     }
     cargarDatos()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router])
 
   const handleGuardar = async (e: React.FormEvent) => {
