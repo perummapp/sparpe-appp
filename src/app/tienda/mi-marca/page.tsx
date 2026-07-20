@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'motion/react'
 import { supabase } from '@/lib/supabaseClient'
 import DatePicker from '@/components/DatePicker'
 import { CATEGORIAS_PRODUCTO } from '@/lib/categoriasProducto'
@@ -26,6 +27,7 @@ export default function MiMarcaPage() {
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [userId, setUserId] = useState('')
+  const [modoEdicion, setModoEdicion] = useState(false)
 
   const [nombre, setNombre] = useState('')
   const [rubro, setRubro] = useState('')
@@ -104,7 +106,13 @@ export default function MiMarcaPage() {
     })
 
     setGuardando(false)
-    setMensaje(error ? 'Error: ' + error.message : '¡Marca guardada correctamente!')
+
+    if (error) {
+      setMensaje('Error: ' + error.message)
+    } else {
+      setMensaje('')
+      setModoEdicion(false)
+    }
   }
 
   const handleSolicitarVerificacion = async () => {
@@ -171,83 +179,107 @@ export default function MiMarcaPage() {
   }
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
-  const inputClass = "w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d] mb-4"
-  const labelClass = "text-sm text-[#9a9a9a] mb-1 block"
+  const inputClass = "w-full bg-surface border border-border input-glow rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] mb-4"
+  const labelClass = "text-sm text-muted mb-1 block"
   const chipClass = (activo: boolean) =>
-    `shrink-0 text-xs px-3 py-1.5 rounded-full border transition ${
-      activo ? 'bg-[#a32d2d] border-[#a32d2d] text-white' : 'border-[#333] text-[#9a9a9a] hover:border-[#555]'
+    `shrink-0 text-xs px-3 py-1.5 rounded-full border transition-all duration-180 ${
+      activo ? 'bg-accent border-accent text-white' : 'border-border text-muted hover:border-[#3a3a3a]'
     }`
+
+  const estadoBadge = verificado
+    ? { texto: '✓ Verificada', clase: 'text-[#7fd1a3] border-[#2e7d4f] bg-[rgba(46,125,79,0.1)]' }
+    : verificacionSolicitada
+      ? { texto: 'En revisión', clase: 'text-amber-400 border-amber-400/40 bg-amber-400/10' }
+      : { texto: 'No verificada', clase: 'text-muted border-border' }
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] p-6">
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white">Mi marca</h1>
-          <Link href="/tienda" className="text-sm text-[#e29b9b] hover:underline">← Tienda</Link>
+          <h1 className="text-2xl font-bold text-white">Mi negocio</h1>
+          <Link href="/tienda" className="text-sm text-accent-light hover:underline">← Tienda</Link>
         </div>
 
-        {nombre && (
-          <div className="mb-6 rounded-xl border p-4 text-sm"
-            style={{
-              borderColor: verificado ? '#2e7d4f' : '#333',
-              backgroundColor: verificado ? 'rgba(46,125,79,0.1)' : '#161616',
-            }}
-          >
-            {verificado ? (
-              <p className="text-[#7fd1a3] font-medium">✓ Marca verificada — ya apareces en la tienda pública.</p>
-            ) : verificacionSolicitada ? (
-              <p className="text-[#9a9a9a]">Verificación solicitada, en revisión por el equipo de SparPe.</p>
-            ) : (
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[#9a9a9a]">Todavía no verificada — tus productos no se ven en la tienda pública hasta que lo esté.</p>
-                <button
-                  onClick={handleSolicitarVerificacion}
-                  disabled={solicitando}
-                  className="shrink-0 bg-[#a32d2d] hover:bg-[#8f2626] text-white text-xs rounded-lg px-3 py-1.5 transition disabled:opacity-50"
+        <motion.div layout transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }} className="card-surface rounded-2xl p-6 mb-6">
+          <AnimatePresence mode="wait">
+            {!modoEdicion ? (
+              <motion.div key="vista" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs px-2.5 py-1 rounded-full border border-border text-muted">🛍️ Marca</span>
+                  <span className={`text-xs px-2.5 py-1 rounded-full border ${estadoBadge.clase}`}>{estadoBadge.texto}</span>
+                </div>
+
+                <h2 className="text-xl font-bold text-white">{nombre || 'Sin nombre'}</h2>
+                {rubro && <p className="text-sm text-muted mt-0.5">{rubro}</p>}
+                {descripcion && <p className="text-sm text-[#d8d8d8] mt-3">{descripcion}</p>}
+                {contacto && <p className="text-xs text-muted mt-3">{contacto}</p>}
+
+                {!verificado && !verificacionSolicitada && (
+                  <motion.button
+                    whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }}
+                    onClick={handleSolicitarVerificacion} disabled={solicitando}
+                    className="btn-secondary w-full text-sm text-white rounded-lg py-2 mt-4 disabled:opacity-50"
+                  >
+                    {solicitando ? 'Enviando...' : 'Solicitar verificación'}
+                  </motion.button>
+                )}
+
+                <motion.button
+                  whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }}
+                  onClick={() => setModoEdicion(true)}
+                  className="btn-primary w-full text-white font-medium rounded-lg py-2.5 mt-3"
                 >
-                  {solicitando ? 'Enviando...' : 'Solicitar verificación'}
-                </button>
-              </div>
+                  Editar mi negocio
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div key="edicion" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-bold text-white">Editar negocio</h2>
+                  <button onClick={() => setModoEdicion(false)} className="text-sm text-muted hover:text-accent-light transition-colors duration-180">Cancelar</button>
+                </div>
+
+                <form onSubmit={handleGuardarMarca}>
+                  <label className={labelClass}>Nombre de la marca</label>
+                  <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Ej. Everlast Perú" className={inputClass} />
+
+                  <label className={labelClass}>Rubro</label>
+                  <input type="text" value={rubro} onChange={(e) => setRubro(e.target.value)} placeholder="Ej. Guantes y equipamiento" className={inputClass} />
+
+                  <label className={labelClass}>Contacto (WhatsApp, IG, web)</label>
+                  <input type="text" value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder="Ej. 987654321 o @marca" className={inputClass} />
+
+                  <label className={labelClass}>Descripción</label>
+                  <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={3} placeholder="Cuéntale a la comunidad qué vende tu marca" className={inputClass} />
+
+                  <motion.button
+                    whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }}
+                    type="submit" disabled={guardando}
+                    className="btn-primary w-full text-white font-medium rounded-lg py-2.5 disabled:opacity-50"
+                  >
+                    {guardando ? 'Guardando...' : 'Guardar cambios'}
+                  </motion.button>
+                </form>
+                {mensaje && <p className="text-sm text-accent-light mt-4">{mensaje}</p>}
+              </motion.div>
             )}
-          </div>
-        )}
-
-        <div className="bg-[#161616] border border-[#262626] rounded-2xl p-6 mb-6">
-          <form onSubmit={handleGuardarMarca}>
-            <label className={labelClass}>Nombre de la marca</label>
-            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Ej. Everlast Perú" className={inputClass} />
-
-            <label className={labelClass}>Rubro</label>
-            <input type="text" value={rubro} onChange={(e) => setRubro(e.target.value)} placeholder="Ej. Guantes y equipamiento" className={inputClass} />
-
-            <label className={labelClass}>Contacto (WhatsApp, IG, web)</label>
-            <input type="text" value={contacto} onChange={(e) => setContacto(e.target.value)} placeholder="Ej. 987654321 o @marca" className={inputClass} />
-
-            <label className={labelClass}>Descripción</label>
-            <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={3} placeholder="Cuéntale a la comunidad qué vende tu marca" className={inputClass} />
-
-            <button type="submit" disabled={guardando}
-              className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white font-medium rounded-lg py-2.5 transition disabled:opacity-50 mt-2">
-              {guardando ? 'Guardando...' : 'Guardar marca'}
-            </button>
-          </form>
-          {mensaje && <p className="text-sm text-[#e29b9b] mt-4">{mensaje}</p>}
-        </div>
+          </AnimatePresence>
+        </motion.div>
 
         {nombre && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm text-[#9a9a9a] uppercase tracking-wide">Mis productos</h2>
-              <button onClick={() => setMostrarFormProducto(!mostrarFormProducto)} className="text-sm text-[#e29b9b] hover:underline">
+              <h2 className="text-sm text-muted uppercase tracking-wide">Mis productos</h2>
+              <button onClick={() => setMostrarFormProducto(!mostrarFormProducto)} className="text-sm text-accent-light hover:underline">
                 {mostrarFormProducto ? 'Cancelar' : '+ Agregar producto'}
               </button>
             </div>
 
             {mostrarFormProducto && (
-              <form onSubmit={handleAgregarProducto} className="bg-[#161616] border border-[#262626] rounded-xl p-4 mb-4">
+              <form onSubmit={handleAgregarProducto} className="card-surface rounded-xl p-4 mb-4">
                 <input type="text" value={pNombre} onChange={(e) => setPNombre(e.target.value)} required placeholder="Nombre del producto" className={inputClass} />
 
                 <p className="text-xs text-[#6b6b6b] mb-1">Categoría</p>
@@ -255,12 +287,7 @@ export default function MiMarcaPage() {
                   {CATEGORIAS_PRODUCTO.map((c) => {
                     const activo = pCategoria === c
                     return (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => setPCategoria(activo ? '' : c)}
-                        className={chipClass(activo)}
-                      >
+                      <button key={c} type="button" onClick={() => setPCategoria(activo ? '' : c)} className={chipClass(activo)}>
                         {c}
                       </button>
                     )
@@ -271,25 +298,25 @@ export default function MiMarcaPage() {
                 <input type="text" value={pImagenUrl} onChange={(e) => setPImagenUrl(e.target.value)} placeholder="URL de imagen (opcional)" className={inputClass} />
                 <input type="text" value={pLinkCompra} onChange={(e) => setPLinkCompra(e.target.value)} placeholder="Link para comprar (opcional)" className={inputClass} />
                 <textarea value={pDescripcion} onChange={(e) => setPDescripcion(e.target.value)} rows={2} placeholder="Descripción (opcional)" className={inputClass} />
-                <button type="submit" disabled={guardandoProducto}
-                  className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2 transition disabled:opacity-50">
+                <motion.button whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }} type="submit" disabled={guardandoProducto}
+                  className="btn-primary w-full text-white text-sm font-medium rounded-lg py-2 disabled:opacity-50">
                   {guardandoProducto ? 'Guardando...' : 'Publicar producto'}
-                </button>
+                </motion.button>
               </form>
             )}
 
             {productos.length === 0 && !mostrarFormProducto && (
-              <p className="text-sm text-[#9a9a9a]">Todavía no publicaste ningún producto.</p>
+              <p className="text-sm text-muted">Todavía no publicaste ningún producto.</p>
             )}
 
             <div className="space-y-2">
               {productos.map((p) => (
-                <div key={p.id} className="bg-[#161616] border border-[#262626] rounded-xl p-3 flex items-center justify-between">
+                <div key={p.id} className="card-surface rounded-xl p-3 flex items-center justify-between">
                   <div>
                     <p className="text-white text-sm font-medium">{p.nombre}</p>
-                    <p className="text-xs text-[#9a9a9a]">{p.categoria || '—'}{p.precio !== null ? ` · S/ ${p.precio}` : ''}</p>
+                    <p className="text-xs text-muted">{p.categoria || '—'}{p.precio !== null ? ` · S/ ${p.precio}` : ''}</p>
                   </div>
-                  <button onClick={() => handleEliminarProducto(p.id)} className="text-xs text-[#e29b9b] hover:underline">
+                  <button onClick={() => handleEliminarProducto(p.id)} className="text-xs text-accent-light hover:underline">
                     Eliminar
                   </button>
                 </div>
@@ -301,36 +328,36 @@ export default function MiMarcaPage() {
         {nombre && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm text-[#9a9a9a] uppercase tracking-wide">Mis ofertas</h2>
-              <button onClick={() => setMostrarFormOferta(!mostrarFormOferta)} className="text-sm text-[#e29b9b] hover:underline">
+              <h2 className="text-sm text-muted uppercase tracking-wide">Mis ofertas</h2>
+              <button onClick={() => setMostrarFormOferta(!mostrarFormOferta)} className="text-sm text-accent-light hover:underline">
                 {mostrarFormOferta ? 'Cancelar' : '+ Agregar oferta'}
               </button>
             </div>
 
             {mostrarFormOferta && (
-              <form onSubmit={handleAgregarOferta} className="bg-[#161616] border border-[#262626] rounded-xl p-4 mb-4">
+              <form onSubmit={handleAgregarOferta} className="card-surface rounded-xl p-4 mb-4">
                 <input type="text" value={oTitulo} onChange={(e) => setOTitulo(e.target.value)} required placeholder="Título (ej. 20% dcto en guantes)" className={inputClass} />
                 <textarea value={oDescripcion} onChange={(e) => setODescripcion(e.target.value)} rows={2} placeholder="Descripción (opcional)" className={inputClass} />
                 <DatePicker value={oVigenteHasta} onChange={setOVigenteHasta} placeholder="Vigente hasta (opcional)" />
-                <button type="submit" disabled={guardandoOferta}
-                  className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2 transition disabled:opacity-50 mt-3">
+                <motion.button whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }} type="submit" disabled={guardandoOferta}
+                  className="btn-primary w-full text-white text-sm font-medium rounded-lg py-2 mt-3 disabled:opacity-50">
                   {guardandoOferta ? 'Guardando...' : 'Publicar oferta'}
-                </button>
+                </motion.button>
               </form>
             )}
 
             {ofertas.length === 0 && !mostrarFormOferta && (
-              <p className="text-sm text-[#9a9a9a]">Todavía no publicaste ninguna oferta.</p>
+              <p className="text-sm text-muted">Todavía no publicaste ninguna oferta.</p>
             )}
 
             <div className="space-y-2">
               {ofertas.map((o) => (
-                <div key={o.id} className="bg-[#161616] border border-[#262626] rounded-xl p-3 flex items-center justify-between">
+                <div key={o.id} className="card-surface rounded-xl p-3 flex items-center justify-between">
                   <div>
                     <p className="text-white text-sm font-medium">{o.titulo}</p>
-                    {o.vigente_hasta && <p className="text-xs text-[#9a9a9a]">Hasta {o.vigente_hasta}</p>}
+                    {o.vigente_hasta && <p className="text-xs text-muted">Hasta {o.vigente_hasta}</p>}
                   </div>
-                  <button onClick={() => handleEliminarOferta(o.id)} className="text-xs text-[#e29b9b] hover:underline">
+                  <button onClick={() => handleEliminarOferta(o.id)} className="text-xs text-accent-light hover:underline">
                     Eliminar
                   </button>
                 </div>

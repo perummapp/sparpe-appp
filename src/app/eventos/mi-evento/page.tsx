@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { motion } from 'motion/react'
 import { supabase } from '@/lib/supabaseClient'
 import DatePicker from '@/components/DatePicker'
 import SelectSheet from '@/components/SelectSheet'
@@ -130,29 +131,31 @@ export default function MiEventoPage() {
   }
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
-  const inputClass = "w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d] mb-4"
-  const labelClass = "text-sm text-[#9a9a9a] mb-1 block"
+  const inputClass = "w-full bg-surface border border-border input-glow rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] mb-4"
+  const labelClass = "text-sm text-muted mb-1 block"
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] p-6">
       <div className="max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-3">
           <h1 className="text-2xl font-bold text-white">Mis eventos</h1>
-          <Link href="/eventos" className="text-sm text-[#e29b9b] hover:underline">← Eventos</Link>
+          <Link href="/eventos" className="text-sm text-accent-light hover:underline">← Eventos</Link>
         </div>
 
+        <span className="inline-block text-xs px-2.5 py-1 rounded-full border border-border text-muted mb-6">🎟️ Promotora</span>
+
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm text-[#9a9a9a] uppercase tracking-wide">Publicados</h2>
-          <button onClick={() => setMostrarForm(!mostrarForm)} className="text-sm text-[#e29b9b] hover:underline">
+          <h2 className="text-sm text-muted uppercase tracking-wide">Publicados</h2>
+          <button onClick={() => setMostrarForm(!mostrarForm)} className="text-sm text-accent-light hover:underline">
             {mostrarForm ? 'Cancelar' : '+ Publicar evento'}
           </button>
         </div>
 
         {mostrarForm && (
-          <form onSubmit={handleAgregarEvento} className="bg-[#161616] border border-[#262626] rounded-xl p-4 mb-5">
+          <form onSubmit={handleAgregarEvento} className="card-surface rounded-xl p-4 mb-5">
             <label className={labelClass}>Nombre de tu promotora/negocio</label>
             <input type="text" value={nombreNegocio} onChange={(e) => setNombreNegocio(e.target.value)} required placeholder="Ej. Combate Perú Promotions" className={inputClass} />
 
@@ -199,42 +202,42 @@ export default function MiEventoPage() {
             <label className={labelClass}>Descripción (opcional)</label>
             <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={3} className={inputClass} />
 
-            {mensaje && <p className="text-sm text-[#e29b9b] mb-3">{mensaje}</p>}
+            {mensaje && <p className="text-sm text-accent-light mb-3">{mensaje}</p>}
 
-            <button type="submit" disabled={guardando}
-              className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white font-medium rounded-lg py-2.5 transition disabled:opacity-50">
+            <motion.button whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }} type="submit" disabled={guardando}
+              className="btn-primary w-full text-white font-medium rounded-lg py-2.5 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Publicar evento'}
-            </button>
+            </motion.button>
           </form>
         )}
 
         {eventos.length === 0 && !mostrarForm && (
-          <p className="text-sm text-[#9a9a9a]">Todavía no publicaste ningún evento.</p>
+          <p className="text-sm text-muted">Todavía no publicaste ningún evento.</p>
         )}
 
         <div className="space-y-3">
           {eventos.map((ev) => {
             const estado = ev.verificado
-              ? { texto: 'Verificado', color: 'text-green-400' }
+              ? { texto: 'Verificado', color: 'text-[#7fd1a3]' }
               : ev.verificacion_solicitada
                 ? { texto: 'En revisión', color: 'text-amber-400' }
-                : { texto: 'No verificado', color: 'text-[#9a9a9a]' }
+                : { texto: 'No verificado', color: 'text-muted' }
 
             return (
-              <div key={ev.id} className="bg-[#161616] border border-[#262626] rounded-xl p-4">
+              <div key={ev.id} className="card-surface rounded-xl p-4">
                 <p className="text-white font-medium">{ev.titulo}</p>
-                <p className="text-sm text-[#9a9a9a] mt-1">
+                <p className="text-sm text-muted mt-1">
                   {ev.fecha} · {ev.ciudad || 'Sin ciudad'} · {ev.disciplina || 'Sin disciplina'}
                 </p>
                 <p className={`text-sm mt-1 font-medium ${estado.color}`}>{estado.texto}</p>
 
                 <div className="flex gap-3 mt-3">
                   {!ev.verificado && !ev.verificacion_solicitada && (
-                    <button onClick={() => handleSolicitarVerificacion(ev.id)} className="text-sm text-[#e29b9b] hover:underline">
+                    <button onClick={() => handleSolicitarVerificacion(ev.id)} className="text-sm text-accent-light hover:underline">
                       Solicitar verificación
                     </button>
                   )}
-                  <button onClick={() => handleEliminarEvento(ev.id)} className="text-sm text-[#e29b9b] hover:underline">
+                  <button onClick={() => handleEliminarEvento(ev.id)} className="text-sm text-accent-light hover:underline">
                     Eliminar
                   </button>
                 </div>

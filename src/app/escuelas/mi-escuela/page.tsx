@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { motion, AnimatePresence } from 'motion/react'
 import { supabase } from '@/lib/supabaseClient'
 import DatePicker from '@/components/DatePicker'
 import SelectSheet from '@/components/SelectSheet'
@@ -21,6 +22,7 @@ export default function MiEscuelaPage() {
   const [guardando, setGuardando] = useState(false)
   const [mensaje, setMensaje] = useState('')
   const [userId, setUserId] = useState('')
+  const [modoEdicion, setModoEdicion] = useState(false)
 
   const [nombre, setNombre] = useState('')
   const [descripcion, setDescripcion] = useState('')
@@ -99,7 +101,13 @@ export default function MiEscuelaPage() {
     })
 
     setGuardando(false)
-    setMensaje(error ? 'Error: ' + error.message : '¡Escuela guardada correctamente!')
+
+    if (error) {
+      setMensaje('Error: ' + error.message)
+    } else {
+      setMensaje('')
+      setModoEdicion(false)
+    }
   }
 
   const handleSolicitarVerificacion = async () => {
@@ -138,132 +146,167 @@ export default function MiEscuelaPage() {
   }
 
   if (cargando) {
-    return <p className="min-h-screen bg-[#0d0d0d] text-[#9a9a9a] flex items-center justify-center">Cargando...</p>
+    return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
   }
 
-  const inputClass = "w-full bg-[#1e1e1e] border border-[#333] rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] focus:outline-none focus:border-[#a32d2d] mb-4"
-  const labelClass = "text-sm text-[#9a9a9a] mb-1 block"
+  const inputClass = "w-full bg-surface border border-border input-glow rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] mb-4"
+  const labelClass = "text-sm text-muted mb-1 block"
+
+  const estadoBadge = verificado
+    ? { texto: '✓ Verificada', clase: 'text-[#7fd1a3] border-[#2e7d4f] bg-[rgba(46,125,79,0.1)]' }
+    : verificacionSolicitada
+      ? { texto: 'En revisión', clase: 'text-amber-400 border-amber-400/40 bg-amber-400/10' }
+      : { texto: 'No verificada', clase: 'text-muted border-border' }
 
   return (
     <div className="min-h-screen bg-[#0d0d0d] p-6">
       <div className="max-w-md mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white">Mi escuela</h1>
-          <Link href="/escuelas" className="text-sm text-[#e29b9b] hover:underline">← Directorio</Link>
+          <h1 className="text-2xl font-bold text-white">Mi negocio</h1>
+          <Link href="/escuelas" className="text-sm text-accent-light hover:underline">← Directorio</Link>
         </div>
 
-        {nombre && (
-          <div className="mb-6 rounded-xl border p-4 text-sm"
-            style={{
-              borderColor: verificado ? '#2e7d4f' : '#333',
-              backgroundColor: verificado ? 'rgba(46,125,79,0.1)' : '#161616',
-            }}
-          >
-            {verificado ? (
-              <p className="text-[#7fd1a3] font-medium">✓ Escuela verificada — ya apareces en el directorio público.</p>
-            ) : verificacionSolicitada ? (
-              <p className="text-[#9a9a9a]">Verificación solicitada, en revisión por el equipo de SparPe.</p>
-            ) : (
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-[#9a9a9a]">Todavía no verificada — no apareces en el directorio público hasta que lo esté.</p>
-                <button
-                  onClick={handleSolicitarVerificacion}
-                  disabled={solicitando}
-                  className="shrink-0 bg-[#a32d2d] hover:bg-[#8f2626] text-white text-xs rounded-lg px-3 py-1.5 transition disabled:opacity-50"
-                >
-                  {solicitando ? 'Enviando...' : 'Solicitar verificación'}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+        <motion.div layout transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }} className="card-surface rounded-2xl p-6 mb-6">
+          <AnimatePresence mode="wait">
+            {!modoEdicion ? (
+              <motion.div key="vista" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs px-2.5 py-1 rounded-full border border-border text-muted">🏫 Escuela</span>
+                  <span className={`text-xs px-2.5 py-1 rounded-full border ${estadoBadge.clase}`}>{estadoBadge.texto}</span>
+                </div>
 
-        <div className="bg-[#161616] border border-[#262626] rounded-2xl p-6 mb-6">
-          <form onSubmit={handleGuardar}>
-            <label className={labelClass}>Nombre de la escuela/gimnasio</label>
-            <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Ej. Team Fuego Lima" className={inputClass} />
+                <h2 className="text-xl font-bold text-white">{nombre || 'Sin nombre'}</h2>
+                {distrito && <p className="text-sm text-muted mt-0.5">{distrito}</p>}
 
-            <label className={labelClass}>Disciplinas que enseña</label>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {DISCIPLINAS.map((d) => {
-                const seleccionada = disciplinasSeleccionadas.includes(d)
-                return (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => toggleDisciplina(d)}
-                    className={`text-xs rounded-full px-3 py-1.5 border transition ${
-                      seleccionada
-                        ? 'bg-[#a32d2d] border-[#a32d2d] text-white'
-                        : 'bg-[#1e1e1e] border-[#333] text-[#9a9a9a]'
-                    }`}
+                {disciplinasSeleccionadas.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-3">
+                    {disciplinasSeleccionadas.map((d) => (
+                      <span key={d} className="text-xs px-2.5 py-1 rounded-full border border-accent/40 text-accent-light">{d}</span>
+                    ))}
+                  </div>
+                )}
+
+                {descripcion && <p className="text-sm text-[#d8d8d8] mt-3">{descripcion}</p>}
+                {(direccion || telefono) && (
+                  <p className="text-xs text-muted mt-3">
+                    {direccion}{direccion && telefono ? ' · ' : ''}{telefono}
+                  </p>
+                )}
+
+                {!verificado && !verificacionSolicitada && (
+                  <motion.button
+                    whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }}
+                    onClick={handleSolicitarVerificacion} disabled={solicitando}
+                    className="btn-secondary w-full text-sm text-white rounded-lg py-2 mt-4 disabled:opacity-50"
                   >
-                    {d}
-                  </button>
-                )
-              })}
-            </div>
+                    {solicitando ? 'Enviando...' : 'Solicitar verificación'}
+                  </motion.button>
+                )}
 
-            <label className={labelClass}>Distrito</label>
-            <div className="mb-4">
-              <SelectSheet
-                value={distrito}
-                onChange={setDistrito}
-                options={DISTRITOS.map((d) => ({ value: d, label: d }))}
-                placeholder="Selecciona el distrito"
-              />
-            </div>
+                <motion.button
+                  whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }}
+                  onClick={() => setModoEdicion(true)}
+                  className="btn-primary w-full text-white font-medium rounded-lg py-2.5 mt-3"
+                >
+                  Editar mi negocio
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div key="edicion" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-bold text-white">Editar negocio</h2>
+                  <button onClick={() => setModoEdicion(false)} className="text-sm text-muted hover:text-accent-light transition-colors duration-180">Cancelar</button>
+                </div>
 
-            <label className={labelClass}>Dirección (opcional)</label>
-            <input type="text" value={direccion} onChange={(e) => setDireccion(e.target.value)} placeholder="Ej. Av. Larco 123" className={inputClass} />
+                <form onSubmit={handleGuardar}>
+                  <label className={labelClass}>Nombre de la escuela/gimnasio</label>
+                  <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} required placeholder="Ej. Team Fuego Lima" className={inputClass} />
 
-            <label className={labelClass}>Teléfono / WhatsApp (opcional)</label>
-            <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Ej. 987654321" className={inputClass} />
+                  <label className={labelClass}>Disciplinas que enseña</label>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {DISCIPLINAS.map((d) => {
+                      const seleccionada = disciplinasSeleccionadas.includes(d)
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => toggleDisciplina(d)}
+                          className={`text-xs rounded-full px-3 py-1.5 border transition-all duration-180 ${
+                            seleccionada ? 'bg-accent border-accent text-white' : 'bg-surface border-border text-muted'
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      )
+                    })}
+                  </div>
 
-            <label className={labelClass}>Descripción breve</label>
-            <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={3} placeholder="Cuéntale a la comunidad de qué se trata tu escuela" className={inputClass} />
+                  <label className={labelClass}>Distrito</label>
+                  <div className="mb-4">
+                    <SelectSheet
+                      value={distrito}
+                      onChange={setDistrito}
+                      options={DISTRITOS.map((d) => ({ value: d, label: d }))}
+                      placeholder="Selecciona el distrito"
+                    />
+                  </div>
 
-            <button type="submit" disabled={guardando}
-              className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white font-medium rounded-lg py-2.5 transition disabled:opacity-50 mt-2">
-              {guardando ? 'Guardando...' : 'Guardar escuela'}
-            </button>
-          </form>
-          {mensaje && <p className="text-sm text-[#e29b9b] mt-4">{mensaje}</p>}
-        </div>
+                  <label className={labelClass}>Dirección (opcional)</label>
+                  <input type="text" value={direccion} onChange={(e) => setDireccion(e.target.value)} placeholder="Ej. Av. Larco 123" className={inputClass} />
+
+                  <label className={labelClass}>Teléfono / WhatsApp (opcional)</label>
+                  <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Ej. 987654321" className={inputClass} />
+
+                  <label className={labelClass}>Descripción breve</label>
+                  <textarea value={descripcion} onChange={(e) => setDescripcion(e.target.value)} rows={3} placeholder="Cuéntale a la comunidad de qué se trata tu escuela" className={inputClass} />
+
+                  <motion.button
+                    whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }}
+                    type="submit" disabled={guardando}
+                    className="btn-primary w-full text-white font-medium rounded-lg py-2.5 disabled:opacity-50"
+                  >
+                    {guardando ? 'Guardando...' : 'Guardar cambios'}
+                  </motion.button>
+                </form>
+                {mensaje && <p className="text-sm text-accent-light mt-4">{mensaje}</p>}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
 
         {nombre && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm text-[#9a9a9a] uppercase tracking-wide">Mis ofertas</h2>
-              <button onClick={() => setMostrarForm(!mostrarForm)} className="text-sm text-[#e29b9b] hover:underline">
+              <h2 className="text-sm text-muted uppercase tracking-wide">Mis ofertas</h2>
+              <button onClick={() => setMostrarForm(!mostrarForm)} className="text-sm text-accent-light hover:underline">
                 {mostrarForm ? 'Cancelar' : '+ Agregar oferta'}
               </button>
             </div>
 
             {mostrarForm && (
-              <form onSubmit={handleAgregarOferta} className="bg-[#161616] border border-[#262626] rounded-xl p-4 mb-4">
+              <form onSubmit={handleAgregarOferta} className="card-surface rounded-xl p-4 mb-4">
                 <input type="text" value={oTitulo} onChange={(e) => setOTitulo(e.target.value)} required placeholder="Título (ej. Primera clase gratis)" className={inputClass} />
                 <textarea value={oDescripcion} onChange={(e) => setODescripcion(e.target.value)} rows={2} placeholder="Descripción (opcional)" className={inputClass} />
                 <DatePicker value={oVigenteHasta} onChange={setOVigenteHasta} placeholder="Vigente hasta (opcional)" />
-                <button type="submit" disabled={guardandoOferta}
-                  className="w-full bg-[#a32d2d] hover:bg-[#8f2626] text-white text-sm font-medium rounded-lg py-2 transition disabled:opacity-50 mt-3">
+                <motion.button whileTap={{ scale: 0.98 }} transition={{ duration: 0.09 }} type="submit" disabled={guardandoOferta}
+                  className="btn-primary w-full text-white text-sm font-medium rounded-lg py-2 mt-3 disabled:opacity-50">
                   {guardandoOferta ? 'Guardando...' : 'Publicar oferta'}
-                </button>
+                </motion.button>
               </form>
             )}
 
             {ofertas.length === 0 && !mostrarForm && (
-              <p className="text-sm text-[#9a9a9a]">Todavía no publicaste ninguna oferta.</p>
+              <p className="text-sm text-muted">Todavía no publicaste ninguna oferta.</p>
             )}
 
             <div className="space-y-2">
               {ofertas.map((o) => (
-                <div key={o.id} className="bg-[#161616] border border-[#262626] rounded-xl p-3 flex items-center justify-between">
+                <div key={o.id} className="card-surface rounded-xl p-3 flex items-center justify-between">
                   <div>
                     <p className="text-white text-sm font-medium">{o.titulo}</p>
-                    {o.vigente_hasta && <p className="text-xs text-[#9a9a9a]">Hasta {o.vigente_hasta}</p>}
+                    {o.vigente_hasta && <p className="text-xs text-muted">Hasta {o.vigente_hasta}</p>}
                   </div>
-                  <button onClick={() => handleEliminarOferta(o.id)} className="text-xs text-[#e29b9b] hover:underline">
+                  <button onClick={() => handleEliminarOferta(o.id)} className="text-xs text-accent-light hover:underline">
                     Eliminar
                   </button>
                 </div>
