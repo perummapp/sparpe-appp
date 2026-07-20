@@ -12,6 +12,18 @@ import { DISCIPLINAS } from '@/lib/disciplinas'
 const PESO_MIN = 20
 const PESO_MAX = 200
 
+const DESTINOS_EMPRESA: Record<string, string> = {
+  escuela: '/escuelas/mi-escuela',
+  marca: '/tienda/mi-marca',
+  promotora: '/eventos/mi-evento',
+}
+
+const TIPOS_EMPRESA = [
+  { value: 'escuela', label: 'Escuela / Gimnasio', emoji: '🏫', desc: 'Publica tu escuela en el directorio y tus ofertas.' },
+  { value: 'marca', label: 'Marca', emoji: '🛍️', desc: 'Publica productos y ofertas en la Tienda.' },
+  { value: 'promotora', label: 'Promotora de eventos', emoji: '🎟️', desc: 'Publica tus eventos en el calendario.' },
+]
+
 export default function PerfilPage() {
   const [cargando, setCargando] = useState(true)
   const [guardando, setGuardando] = useState(false)
@@ -26,6 +38,8 @@ export default function PerfilPage() {
   const [escuela, setEscuela] = useState('')
   const [distrito, setDistrito] = useState('')
   const [disponibleSparring, setDisponibleSparring] = useState(false)
+  const [necesitaTipoEmpresa, setNecesitaTipoEmpresa] = useState(false)
+  const [guardandoTipo, setGuardandoTipo] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -36,15 +50,15 @@ export default function PerfilPage() {
 
       const { data: perfil } = await supabase.from('perfiles').select('*').eq('id', userData.user.id).single()
 
-      // Cuenta de empresa: no le corresponde este formulario de peleador,
-      // la mandamos directo a la pantalla de gestión de su negocio.
       if (perfil?.categoria_cuenta === 'empresa') {
-        const destinos: Record<string, string> = {
-          escuela: '/escuelas/mi-escuela',
-          marca: '/tienda/mi-marca',
-          promotora: '/eventos/mi-evento',
+        // Ya eligió su tipo de negocio antes → va directo a gestionarlo.
+        if (perfil.tipo_usuario && DESTINOS_EMPRESA[perfil.tipo_usuario]) {
+          router.push(DESTINOS_EMPRESA[perfil.tipo_usuario])
+          return
         }
-        router.push(destinos[perfil.tipo_usuario ?? ''] ?? '/soy-empresa')
+        // Es empresa pero todavía no eligió qué tipo → se lo preguntamos aquí mismo.
+        setNecesitaTipoEmpresa(true)
+        setCargando(false)
         return
       }
 
@@ -63,6 +77,15 @@ export default function PerfilPage() {
     cargarDatos()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router])
+
+  const handleElegirTipoEmpresa = async (tipo: string) => {
+    setGuardandoTipo(true)
+    const { error: guardarError } = await supabase.from('perfiles').update({ tipo_usuario: tipo }).eq('id', userId)
+    setGuardandoTipo(false)
+    if (!guardarError) {
+      router.push(DESTINOS_EMPRESA[tipo])
+    }
+  }
 
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,6 +120,40 @@ export default function PerfilPage() {
 
   if (cargando) {
     return <p className="min-h-screen bg-[#0d0d0d] text-muted flex items-center justify-center">Cargando...</p>
+  }
+
+  if (necesitaTipoEmpresa) {
+    return (
+      <div className="min-h-screen bg-[#0d0d0d] flex items-center justify-center p-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-sm card-surface rounded-2xl p-8"
+        >
+          <h1 className="text-2xl font-bold text-white mb-2">Cuenta de empresa</h1>
+          <p className="text-sm text-muted mb-6">
+            Elige qué tipo de negocio tienes. Esta elección queda fija, así que revisa bien antes de confirmar.
+          </p>
+          <div className="space-y-3">
+            {TIPOS_EMPRESA.map((t) => (
+              <motion.button
+                key={t.value}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.09 }}
+                onClick={() => handleElegirTipoEmpresa(t.value)}
+                disabled={guardandoTipo}
+                className="btn-secondary w-full text-left rounded-xl p-4 disabled:opacity-50"
+              >
+                <p className="text-white font-medium">{t.emoji} {t.label}</p>
+                <p className="text-xs text-muted mt-1">{t.desc}</p>
+              </motion.button>
+            ))}
+          </div>
+          {guardandoTipo && <p className="text-sm text-muted mt-4">Guardando...</p>}
+        </motion.div>
+      </div>
+    )
   }
 
   const inputClass = "w-full bg-surface border border-border input-glow rounded-lg px-3 py-2.5 text-sm text-white placeholder-[#6b6b6b] mb-4"
